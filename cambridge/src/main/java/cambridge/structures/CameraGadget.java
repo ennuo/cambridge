@@ -4,7 +4,7 @@ import cambridge.io.streams.MemoryInputStream;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-public class GameCamera extends GameObject
+public class CameraGadget extends GameObject
 {
     public float trackPlayer = 1.0f;
     public Vector2f pitchAngle;

@@ -115,7 +115,7 @@ public class PartConverter
         return (float) front - shape.thickness;
     }
     
-    public static Thing addLandscape(LoadContext context, Landscape landscape)
+    public static Thing addLandscape(LoadContext context, LandChunkEntity landscape)
     {
         // A layer is 0.22 units
         // BACK THIN: Z = -0.44, Depth = 0.02
@@ -272,7 +272,7 @@ public class PartConverter
 
     // public static HashMap<String, ArrayList<Vector3f>> modelOffsetPaths = new HashMap<>();
 
-    public static Thing addMesh(LoadContext context, ModelObject object)
+    public static Thing addMesh(LoadContext context, MeshEntity object)
     {
         // if (object.model.toLowerCase().contains("gadgets")) return null;
 
@@ -730,7 +730,7 @@ public class PartConverter
         return things[0];
     }
 
-    public static Thing addCameraZone(LoadContext context, GameCamera camera)
+    public static Thing addCameraZone(LoadContext context, CameraGadget camera)
     {
         Thing thing = context.loader.getGameAsset(context, PS3Asset.CAMERA_ZONE)[0];
         Vector3f translation = camera.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);

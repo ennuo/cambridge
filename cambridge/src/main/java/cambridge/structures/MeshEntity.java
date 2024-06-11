@@ -4,7 +4,7 @@ import org.joml.Vector3f;
 
 import cambridge.io.streams.MemoryInputStream;
 
-public class ModelObject extends GameObject 
+public class MeshEntity extends GameObject 
 {
     public Vector3f modelPositionOffset;
 

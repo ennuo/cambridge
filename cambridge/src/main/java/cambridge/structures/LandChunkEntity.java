@@ -2,7 +2,7 @@ package cambridge.structures;
 
 import cambridge.io.streams.MemoryInputStream;
 
-public class Landscape extends GameObject
+public class LandChunkEntity extends GameObject
 {
     public Decal[] decals;
 

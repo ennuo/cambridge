@@ -3,7 +3,7 @@ package cambridge.structures.switches;
 import cambridge.io.streams.MemoryInputStream;
 import cambridge.structures.Switch;
 
-public class ProximitySwitch extends Switch
+public class MagneticKeySwitch extends Switch
 {
     @Override
     public void load(MemoryInputStream stream)

@@ -289,21 +289,41 @@ public class ResourceConverter
 
 
                 PLevelSettings lighting = new PLevelSettings();
-                lighting.ambientColor = new Vector4f(0.80777466f, 0.8210661f, 0.7313651f, 1.0f);
-                lighting.sunPosition = new Vector3f(0.08f, 0.24439862f, 0.17429554f);
                 lighting.sunPositionScale = 310309.28f;
+
+                lighting.sunPosition = new Vector3f(0.08f, 0.24439862f, 0.17429554f);
                 lighting.sunColor = new Vector4f(0.9131379f, 0.8234369f, 0.833018f, 1.0426356f);
+                lighting.ambientColor = new Vector4f(0.80777466f, 0.8210661f, 0.7313651f, 1.0f);
+                lighting.rimColor = new Vector4f(0.8252604f, 0.69928366f, 0.55837226f, 1.5f);
+                lighting.rimColor2 = new Vector4f(0.35081163f, 0.6995919f, 0.9100586f, 1.0f);
+                lighting.fogColor = new Vector4f(0.6026691f, 0.76635367f, 0.78096366f, 1.0f);
                 lighting.sunMultiplier = 1.5f;
                 lighting.exposure = 1.05f;
-                lighting.fogColor = new Vector4f(0.6026691f, 0.76635367f, 0.78096366f, 1.0f);
-                // lighting.fogNear =  bals.fogNear * 1000.0f;
-                // lighting.fogFar = bals.fogFar * 1000.0f;
-
                 lighting.fogNear = 200.0f;
                 lighting.fogFar = 15000.0f;
 
-                lighting.rimColor = new Vector4f(0.8252604f, 0.69928366f, 0.55837226f, 1.5f);
-                lighting.rimColor2 = new Vector4f(0.35081163f, 0.6995919f, 0.9100586f, 1.0f);
+                int sunLightIndex = 0;
+                if (bals.lights[sunLightIndex].diffuseColor.equals(new Vector4f(), 0.01f))
+                    sunLightIndex = 1;
+
+
+                System.out.println(sunLightIndex);
+
+                lighting.sunPositionScale = 300_000.0f;
+                lighting.sunPosition = bals.lights[sunLightIndex].lightVector;
+                lighting.sunColor = bals.lights[sunLightIndex].diffuseColor;
+                lighting.ambientColor = bals.globalAmbientColor.mul(1.5f);
+                lighting.rimColor = bals.lights[2].diffuseColor.mul(1.5f);
+                lighting.rimColor2 = bals.lights[3].diffuseColor.mul(1.5f);
+                
+                // lighting.fogColor = new Vector4f(bclr.rgb, 1.0f);
+                lighting.sunMultiplier = 1.5f;
+                lighting.exposure = 1.0f;
+                // lighting.exposure = 1.0f / 0.6f;
+
+                lighting.fogNear =  (bals.fogNear * PartConverter.WORLD_SCALE) + PartConverter.WORLD_OFFSET.z;
+                lighting.fogFar =  (bals.fogFar * PartConverter.WORLD_SCALE) + PartConverter.WORLD_OFFSET.z;
+
 
                 Thing settingsThing = new Thing(++lastUID);
                 settingsThing.setPart(Part.POS, new PPos());

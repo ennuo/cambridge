@@ -22,7 +22,7 @@ public enum ElementType
 
     JETPACK("JTPK", Jetpack.class),
 
-    LANDSCAPE("LAND", Landscape.class),
+    LANDSCAPE("LAND", LandChunkEntity.class),
     GLUE("GLUE", Glue.class),
     VERTICES("VERT"),
 
@@ -58,14 +58,14 @@ public enum ElementType
     ITEM_METADATA("MET0", ItemMetadata.class),
 
     STICKER_SWITCH("STKS", StickerSwitch.class),
-    PROXIMITY_SWITCH("SENS", ProximitySwitch.class),
+    PROXIMITY_SWITCH("SENS", SensorSwitch.class),
     GRAB_SWITCH("GRBS", GrabSensor.class),
-    TAG_SENSOR("KEYS", TagSensor.class),
+    TAG_SENSOR("KEYS", MagneticKeySwitch.class),
 
-    CAMERA_ZONE("GCAM", GameCamera.class),
+    CAMERA_ZONE("GCAM", CameraGadget.class),
 
     EMITTER("EMIT", Emitter.class),
-    MESH("MERO", ModelObject.class),
+    MESH("MERO", MeshEntity.class),
 
     MUSIC("MUSC", Music.class),
 

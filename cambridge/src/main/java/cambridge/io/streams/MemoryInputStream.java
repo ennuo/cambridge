@@ -353,21 +353,28 @@ public class MemoryInputStream
         return null;
     }
 
+    // psp alpha uses ABGR or RGBA in LE
+
     public Vector4f argb()
     {
         if (!this.isLittleEndian)
             throw new RuntimeException("I don't fucking care, man, shut the fuck up!");
-        float b = (((float) this.u8()) / (float) 0xff);
-        float g = (((float) this.u8()) / (float) 0xff);
+        // float b = (((float) this.u8()) / (float) 0xff);
+        // float g = (((float) this.u8()) / (float) 0xff);
+        // float r = (((float) this.u8()) / (float) 0xff);
+        // float a = (((float) this.u8()) / (float) 0xff);
+
         float r = (((float) this.u8()) / (float) 0xff);
+        float g = (((float) this.u8()) / (float) 0xff);
+        float b = (((float) this.u8()) / (float) 0xff);
         float a = (((float) this.u8()) / (float) 0xff);
+
         return new Vector4f(
             r,
             g,
             b,
             a
         );
-
     }
 
     /**
