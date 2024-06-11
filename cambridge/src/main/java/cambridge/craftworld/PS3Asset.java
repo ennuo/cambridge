@@ -1,0 +1,45 @@
+package cambridge.craftworld;
+
+public enum PS3Asset
+{
+    SCORE_BUBBLE(31733),
+    PRIZE_BUBBLE(31743),
+    JETPACK(31737),
+    TAG(31755),
+    PISTON(31728),
+    STRING(31729),
+    ROD(31730),
+    ELASTIC(31731),
+    WINCH(31732),
+    SPRING(39469),
+    BOLT(31723),
+    MOTOR_BOLT(31724),
+    WOBBLE_BOLT(31725),
+    SPRUNG_BOLT(31726),
+    MAGIC_MOUTH(31769),
+    STICKER_SWITCH(31775),
+    PROXIMITY_SWITCH(31752),
+    GRAB_SWITCH(36920),
+    TAG_SENSOR(31756),
+    CAMERA_ZONE(31770),
+    CHECKPOINT(31736),
+    ENTRANCE(31735),
+    EMITTER(31742),
+    COSTUME_TEMPLATE(69448),
+    SOUND_OBJECT(33140),
+    SCOREBOARD(31741),
+    BINARY_SWITCH(31776),
+    TRINARY_SWITCH(31777);
+
+    private final long guid;
+
+    PS3Asset(long guid)
+    {
+        this.guid = guid;
+    }
+
+    public long getGUID()
+    {
+        return this.guid;
+    }
+}

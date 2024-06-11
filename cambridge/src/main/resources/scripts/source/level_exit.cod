@@ -1,0 +1,21 @@
+using library 'lbp1';
+
+import 'std:thing';
+import 'std:game';
+import 'std:gamemessagingmanager';
+
+class LevelExit extends Thing
+{
+	private fn SwitchPerformReaction(activation: f32, value_change: bool, switch_event: s32, _: s32)
+	{
+		if (Game.InEditMode()) return;
+		
+		let SWITCH_EVENT_UPDATE = 0x0;
+		if (switch_event == SWITCH_EVENT_UPDATE && value_change && activation > 0.7)
+		{
+			Game.SetLevelCompleted();
+			Game.SetLevelDone();
+			Game.ClearPendingLinks();
+		}
+	}
+}

@@ -1,0 +1,178 @@
+#define NO_FLAGS (0)
+
+// LBP2 compile flags
+#define DECALS (1 << 0)
+#define WATER_CAUSTICS (1 << 1)
+#define SPRITELIGHT (1 << 2)
+#define BAKED_AO (1 << 3)
+#define DYNAMIC_AO (1 << 4)
+#define AO_FLAGS (BAKED_AO | DYNAMIC_AO)
+#define BAKED_SHADOWS (1 << 5)
+#define DYNAMIC_SHADOWS (1 << 6)
+#define SHADOW_FLAGS (BAKED_SHADOWS | DYNAMIC_SHADOWS)
+
+// LBP1 compile flags
+#define DEFERRED (1 << 7)
+#define DEFERRED_NORMAL_PASS (1 << 8)
+
+// Material properties
+#define SPECULAR (1 << 9)
+#define NORMAL (1 << 10)
+#define ALPHA (1 << 11)
+#define REFRACT (1 << 12)
+#define GLOW (1 << 13)
+#define GLASS (1 << 14)
+#define ST7 (1 << 22)
+#define ANISO (1 << 16)
+#define TRANS (1 << 17)
+#define COLOR_CORRECTION (1 << 18)
+#define FUZZ (1 << 19)
+#define BRDF_REFLECTANCE (1 << 20)
+#define LIGHTING_RAMP (1 << 21)
+
+// Set this variable to define what maps this material uses.
+#define PROPERTIES (ALPHA | SPECULAR)
+
+// Set this variable to define how this shader is compiled.
+// Refer to charts below for appropriate configurations.
+#define FLAGS ENV.COMPILE_FLAGS
+
+#define SAMPLE_2D(sampler, uv) tex2D(sampler, uv)
+#define CREATE_SAMPLER_2D(name, index) sampler2D name: TEXUNIT##index
+
+float AlphaTestLevel = 0.5;
+
+uniform float4 fogcol;
+uniform float4 tintcol;
+
+CREATE_SAMPLER_2D(s0, 0);
+
+#if (FLAGS & DECALS)
+    CREATE_SAMPLER_2D(itex, 10);
+    CREATE_SAMPLER_2D(wstex, 11);
+#endif
+
+#if ((FLAGS & DEFERRED) && ((FLAGS & DEFERRED_NORMAL_PASS) == 0))
+    CREATE_SAMPLER_2D(lbuf, 12);
+    CREATE_SAMPLER_2D(zbuf, 13);
+    CREATE_SAMPLER_2D(nbuf, 14);
+#endif
+
+CREATE_SAMPLER_2D(cbuf, 15);
+
+#if (PROPERTIES & SPECULAR)
+float4 GetSpecularColor(float4 iUV, float4 iColor) {
+    return SAMPLE_2D(s0, iUV.xy) * __PSP_DIFFUSE_COLOR__ * __PSP_SPECULAR_COLOR__;
+}
+#endif
+
+float4 GetDiffuseColor(float4 iUV, float4 iColor) {
+	return SAMPLE_2D(s0, iUV.xy) * __PSP_DIFFUSE_COLOR__;
+}
+
+#if (PROPERTIES & ALPHA)
+float4 GetAlpha(float4 iUV, float4 iColor) {
+	return SAMPLE_2D(s0, iUV.xy);
+}
+#endif
+
+#if (FLAGS & DECALS)
+float4 GetDecals(float3 iDecalUV) {
+    float2 dcoord = (frac(iDecalUV.xy * 256.0) * 127.0 + floor(SAMPLE_2D(itex, iDecalUV.xy).xy * 32640.0 + 0.5) + 0.5) * 0.000488281;
+    return SAMPLE_2D(wstex, dcoord);
+}
+#endif
+
+#if (FLAGS & WATER_CAUSTICS)
+    #define DEFERRED_POS_OFFSET float2(0.003125, 0.00555556)
+    #define DEFERRED_ZBUF_OFFSET float2(0.00078125, 0.0)
+    #define DEFERRED_LNBUF_OFFSET (zbfs * 0.199219)
+#else
+    #define DEFERRED_POS_OFFSET float2(0.00078125, 0.00138889)
+    #define DEFERRED_ZBUF_OFFSET float2(0.000195313, 0.0)
+    #define DEFERRED_LNBUF_OFFSET (zbfs * 0.0498047)
+#endif
+
+float2 encode(float3 normal) {
+    float2 encoded = normal.xy;
+    float z = length(normal + float3(0.0, 0.0, 1.0));
+    return (encoded / z / 2.0) + 0.5;
+}
+
+float3 decode(float2 encoded_normal) {
+    float2 n = (encoded_normal * 2.0) - 1.0;
+    float z = 1.0 - dot(n, n);
+    float3 normal = float3(n, abs(z) / sqrt(z)) / rsqrt(z) * 2.0;
+    normal.z -= 1.0;
+    return normal;
+}
+
+// LBP1 main
+void main(
+    float4 iUV: TEXCOORD0,
+    float4 iTangent: TEXCOORD1,
+    float4 iNormal: TEXCOORD2,
+    float3 iDecalUV: TEXCOORD3,
+    float3 iVec2Eye: TEXCOORD4,
+    float4 iPositionNew: TEXCOORD5,
+    float4 iPositionOld: TEXCOORD6,
+
+    float4 iWorldPos: WPOS,
+    float4 iColor: COLOR0,
+
+    out half4 fragColor
+) {
+    #if (PROPERTIES & ALPHA)
+        float4 alpha = GetAlpha(iUV, iColor);
+        if (GetAlpha(iUV, iColor).w < AlphaTestLevel) discard;
+    #endif
+
+    // First normal pass shader
+    #if ((FLAGS & DEFERRED_NORMAL_PASS) == (DEFERRED_NORMAL_PASS))
+        float3 normal = normalize(iNormal.xyz);
+        float2 delta = ((iPositionNew.xy / iPositionNew.w) - (iPositionOld.xy / iPositionOld.w)) * 4.0;
+        fragColor = half4(
+            encode(normal),
+            half2(delta.x, -delta.y) + 0.503922
+        );
+    // The actual color shaders
+    #else
+        float2 pos = iWorldPos.xy * DEFERRED_POS_OFFSET;
+        pos.y = 1.0 - pos.y;
+
+        float zbfs = SAMPLE_2D(zbuf, pos - DEFERRED_ZBUF_OFFSET).w;
+        float2 pixelPos = float2(DEFERRED_LNBUF_OFFSET + pos.x, pos.y);
+
+        float4 lbfs = SAMPLE_2D(lbuf, pixelPos);
+        // psp coeff downscaling
+        lbfs.w = exp2((log2(lbfs.w) / 22.0) * __PSP_MATERIAL_COEFFICIENT__);
+
+        float3 diffuse = GetDiffuseColor(iUV, iColor).xyz;
+        #if (FLAGS & DECALS)
+            float4 decals = GetDecals(iDecalUV);
+            diffuse = (diffuse * decals.w) + decals.xyz;
+        #endif
+
+        float3 prod = pow(lbfs.xyz, 2);
+
+
+        float3 reflection = float3(0.0, 0.0, 0.0); // Dummy addition variable.
+        #if (PROPERTIES & SPECULAR)
+            float3 specular = GetSpecularColor(iUV, iColor).xyz;
+            float3 lobe = (((lbfs.w * prod) * specular) + (specular * reflection)) * 2;
+        #else
+            float3 lobe = reflection;
+        #endif
+
+
+        float3 color = (diffuse * prod) + lobe;
+        color = sqrt(abs(color * tintcol.rgb));
+        color = saturate(iDecalUV.z) * (-color + fogcol.xyz) + color;
+
+        float factor = max(max(color.x, max(color.y, color.z)), 1.0);
+        fragColor = half4(
+            color / factor,
+            (1.0 / factor) / 2
+        );
+    #endif
+}

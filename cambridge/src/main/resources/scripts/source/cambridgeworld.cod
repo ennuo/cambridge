@@ -1,0 +1,41 @@
+using library 'lbp1';
+
+import 'std:thing';
+import 'std:game';
+import 'std:world';
+import 'std:bonus';
+import 'std:system';
+import 'std:cam';
+
+class CambridgeWorld extends World
+{
+    pub fn UpdateCameraConstants()
+    {
+        Cam.CameraSetOrthoRequestMode(true);
+    }
+
+    pub fn Update()
+    {
+        super.Update();
+        this.UpdateCameraConstants();
+    }
+
+    pub fn OnCreate()
+    {
+        # Can't call the super OnCreate because it'll trigger the update loop
+        this.Bonuses = new Bonus[];
+        this.ScoreMultiplier = 0;
+        # super.SetPieChartMultiplier(0);
+        while (!this.Finish)
+        {
+            this.Update();
+            System.Yield();
+        }
+    }
+
+    pub fn OnDestroy()
+    {
+        this.Finish = true;
+        Cam.CameraSetOrthoRequestMode(false);
+    }
+}

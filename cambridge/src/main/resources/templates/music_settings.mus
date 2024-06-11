@@ -1,0 +1,14 @@
+MUSt
+MasterVolume	1
+TrackTranslatedTag	"TEMPLATE_TAG"
+IsCopyrighted	true
+StereoPairs	1
+	[0]	
+		MusicStemTranslatedTag	"MUSIC_STEM_MASTER"
+		SliderIndex	0
+		Fade	1.6
+		FadeIn	1.6
+		FadeOut	1
+		ForwardSend	1
+		RearSend	0
+		Trigger	false
