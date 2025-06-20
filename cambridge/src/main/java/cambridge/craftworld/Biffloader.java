@@ -521,8 +521,20 @@ public class Biffloader
         // Mainly for sticker switches, but good to have them all
         for (String path : Archive.PATHS.values())
         {
+            if (path.endsWith(".model"))
+            {
+                try
+                {
+                    ResourceConverter.getMesh(context, path, null);
+                }
+                catch (Exception ex)
+                {
+                    System.out.println("Failed to load : " + path);
+                }
+                continue;
+            }
+
             if (!path.endsWith(".meta.biff")) continue;
-            // if (!path.contains("sfx")) continue;
 
             ResourceConverter.getItem(context, path);
         }
