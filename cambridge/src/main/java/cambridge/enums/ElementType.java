@@ -28,6 +28,7 @@ public enum ElementType
 
     SCORE_BUBBLE("SBUB", ScoreBubble.class),
     PRIZE_BUBBLE("PBUB", PrizeBubble.class),
+    LEVEL_KEY("LKEY", LevelKey.class),
 
     BOLT("BOLT", Bolt.class),
     WOBBLE_BOLT("WBLT", WobbleBolt.class),
@@ -50,7 +51,13 @@ public enum ElementType
 
     MAGIC_MOUTH("MAGM", MagicMouth.class),
 
-    THRUSTER("RCKT"),
+    THRUSTER("RCKT", Thruster.class),
+    CREATURE_BRAIN_UNPROTECTED("CBUN", CreatureBrain.class),
+    CREATURE_BRAIN_PROTECTED("CBPR", CreatureBrain.class),
+    CREATURE_WHEEL("WHEL", CreaturePiece.class),
+    CREATURE_LEG("LEG ", CreaturePiece.class),
+    CREATURE_NAVIGATOR("CNAV", CreatureNavigator.class),
+    MAGIC_EYE("MAGE", MagicEye.class),
 
     MATERIAL_MANAGER("MMGR", MaterialManager.class),
     MATERIAL_DATA("MDAT"),
@@ -68,6 +75,7 @@ public enum ElementType
     MESH("MERO", MeshEntity.class),
 
     MUSIC("MUSC", Music.class),
+    SOUND_OBJECT("AUDO", SoundObject.class),
 
     BACKGROUND_DATA("BDAT", BackgroundData.class),
     BACKGROUND_COLOR("BCLR", BackgroundColor.class),

@@ -54,16 +54,23 @@ public class MaterialLookupTableSerializer implements JsonSerializer<HashMap<Int
             long 
                 render = -1,
                 physics = -1,
+                staticPhysics = -1,
                 bevel = -1;
+            int
+                sound = 0;
             
             if (value.has("gmat"))
                 render = value.get("gmat").getAsNumber().longValue();
             if (value.has("physics"))
                 physics = value.get("physics").getAsNumber().longValue();
+            if (value.has("staticPhysics"))
+                staticPhysics = value.get("staticPhysics").getAsNumber().longValue();
             if (value.has("bevel"))
                 bevel = value.get("bevel").getAsNumber().longValue();
+            if (value.has("sound"))
+                sound = value.get("sound").getAsNumber().intValue();
             
-            MLUT.put(uid, new MaterialLookupData(physics, render, bevel));
+            MLUT.put(uid, new MaterialLookupData(physics, staticPhysics, render, bevel, sound));
         }
 
         return MLUT;

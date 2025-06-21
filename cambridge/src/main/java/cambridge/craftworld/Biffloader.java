@@ -454,37 +454,37 @@ public class Biffloader
 
 
                 long physicsMaterialKey;
-                long staticPhysicsMaterialKey = 11987;
+                long staticPhysicsMaterialKey;
 
                 String category = material.texture.split("\\\\")[1];
                 switch (category)
                 {
                     case "Cardboard":
-                        physicsMaterialKey = 66927; break;
+                        physicsMaterialKey = 66927; staticPhysicsMaterialKey = 2790593263l; break;
                     case "Metal": 
-                        physicsMaterialKey = 10716; break;
+                        physicsMaterialKey = 10716; staticPhysicsMaterialKey = 4226309871l;  break;
                     case "Sponge":
-                        physicsMaterialKey = 10719; break;
+                        physicsMaterialKey = 10719; staticPhysicsMaterialKey = 3479689174l;  break;
                     case "Stone":
-                        physicsMaterialKey = 26602; break;
+                        physicsMaterialKey = 26602; staticPhysicsMaterialKey = 3060067881l;  break;
                     case "Wood":
-                        physicsMaterialKey = 10717; break;
+                        physicsMaterialKey = 10717; staticPhysicsMaterialKey = 3643538752l;  break;
                     case "Polystyrene": 
-                        physicsMaterialKey = 10718; break;
+                        physicsMaterialKey = 10718; staticPhysicsMaterialKey = 3962255420l;  break;
                     case "Glass":
-                        physicsMaterialKey = 10725; break;
+                        physicsMaterialKey = 10725; staticPhysicsMaterialKey = 3905019888l;  break;
                     case "PeachBubble":
-                        physicsMaterialKey = 21165; break;
+                        physicsMaterialKey = 21165; staticPhysicsMaterialKey = 11987;  break;
                     case "PinkBubble":
-                        physicsMaterialKey = 21166; break;
+                        physicsMaterialKey = 21166; staticPhysicsMaterialKey = 11987;  break;
                     case "Balloon":
-                        physicsMaterialKey = 12744; break;
+                        physicsMaterialKey = 12744; staticPhysicsMaterialKey = 11987;  break;
                     case "Dissolve":
-                        physicsMaterialKey = 22011; break;
+                        physicsMaterialKey = 22011; staticPhysicsMaterialKey = 2529223588l;  break;
                     case "Rubber":
-                        physicsMaterialKey = 16362; break;
+                        physicsMaterialKey = 16362; staticPhysicsMaterialKey = 2845797531l;  break;
                     default:
-                        physicsMaterialKey = 3520; break;
+                        physicsMaterialKey = 3520; staticPhysicsMaterialKey = 11987;  break;
                 }
 
                 if (data.physicsResource == null)
@@ -672,11 +672,35 @@ public class Biffloader
                 case PRIZE_BUBBLE:
                     PartConverter.addPrizeBubble(context, element.load());
                     break;
+                case LEVEL_KEY:
+                    PartConverter.addLevelKey(context, element.load());
+                    break;
                 case JETPACK:
                     PartConverter.addJetpack(context, element.load());
                     break;
                 case MAGIC_MOUTH:
                     PartConverter.addMagicMouth(context, element.load());
+                    break;
+                case MAGIC_EYE:
+                    PartConverter.addMagicEye(context, element.load());
+                    break;
+                case CREATURE_NAVIGATOR:
+                    PartConverter.addCreatureNavigator(context, element.load());
+                    break;
+                case CREATURE_BRAIN_UNPROTECTED:
+                    PartConverter.addCreatureBrain(context, element.load(), 0);
+                    break;
+                case CREATURE_BRAIN_PROTECTED:
+                    PartConverter.addCreatureBrain(context, element.load(), 0);
+                    break;
+                case CREATURE_WHEEL:
+                    PartConverter.addCreaturePiece(context, element.load(), 0);
+                    break;
+                case CREATURE_LEG:
+                    PartConverter.addCreaturePiece(context, element.load(), 1);
+                    break;
+                case THRUSTER:
+                    PartConverter.addThruster(context, element.load());
                     break;
                 case MAGNETIC_KEY:
                     PartConverter.addMagneticKey(context, element.load());
@@ -698,6 +722,9 @@ public class Biffloader
                     break;
                 case MUSIC:
                     PartConverter.addMusic(context, element.load());
+                    break;
+                case SOUND_OBJECT:
+                    PartConverter.addSound(context, element.load());
                     break;
                 case PISTON:
                 case STRING:

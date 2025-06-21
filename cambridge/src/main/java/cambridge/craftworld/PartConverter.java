@@ -18,6 +18,7 @@ import cambridge.structures.switches.StickerSwitch;
 import cambridge.util.Crypto;
 import cwlib.enums.*;
 import cwlib.resources.RPlan;
+import cwlib.resources.RScript;
 import cwlib.structs.things.Thing;
 import cwlib.structs.things.components.EggLink;
 import cwlib.structs.things.components.decals.Decal;
@@ -144,6 +145,7 @@ public class PartConverter
 
         PShape shape = new PShape(landscape.mesh.vertices);
         shape.bevelSize = material.bevelSize;
+        shape.soundEnumOverride = material.soundEnumOverride;
         shape.COM.setColumn(3, new Vector4f(com, 1.0f));
 
 
@@ -477,10 +479,49 @@ public class PartConverter
 
     public static Thing addJetpack(LoadContext context, Jetpack jetpack)
     {
-        Thing thing = addGameAsset(context, PS3Asset.JETPACK, jetpack);
+        Thing thing = context.loader.getGameAsset(context, PS3Asset.JETPACK)[0];
+        Vector3f translation = jetpack.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
 
         PScript script = thing.getPart(Part.SCRIPT);
         script.instance.memberData.put("TetherLength", jetpack.tetherLength * 50.0f * 100.0f);
+
+        // Note: need to offset for local pos too
+        PPos pos = thing.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        thing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
+        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
+        translation.y += 16.646973f;
+        wpos.setTranslation(translation);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        context.lookup.put(jetpack.uid, thing);
+        context.things.add(thing);
+
+        return thing;
+    }
+    
+    public static Thing addThruster(LoadContext context, Thruster thruster)
+    {
+        Thing thing = context.loader.getGameAsset(context, PS3Asset.THRUSTER)[0];
+        Vector3f translation = thruster.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+
+        PScript script = thing.getPart(Part.SCRIPT);
+        script.instance.memberData.put("Strength", thruster.strength * 50.0f);
+
+        PPos pos = thing.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        thing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
+        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
+        wpos.setTranslation(translation);
+        wpos.rotateZ(thruster.angle);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        context.lookup.put(thruster.uid, thing);
+        context.things.add(thing);
 
         return thing;
     }
@@ -527,6 +568,48 @@ public class PartConverter
         return thing;
     }
 
+    public static Thing addSound(LoadContext context, SoundObject sound)
+    {
+        Thing thing = context.loader.getGameAsset(context, PS3Asset.SOUND_OBJECT)[0];
+        Vector3f translation = sound.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+
+        PPos pos = thing.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        wpos.setTranslation(translation);
+        wpos.rotateZ(sound.angle);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        String sound_path = sound.sfx;
+        String sound_category = sound.sfx;
+
+        thing.<PAudioWorld>getPart(Part.AUDIO_WORLD).soundName = sound_path;
+        
+        /*
+        PRenderMesh mesh = thing.getPart(Part.RENDER_MESH);
+        switch (sound_category) {
+            case "animals": mesh.mesh = null;  break;
+            case "mechanical": mesh.mesh = null; break;
+            default: mesh.mesh = null; break;
+        }
+        */
+
+        //Add sound object txt file
+        
+        ScriptInstance instance = thing.<PScript>getPart(Part.SCRIPT).instance;
+        //instance.addField("SoundNames", sound.names);
+        //instance.addField("IsLocal", sound.local);
+        //instance.addField("IsLooping", sound.looping);
+        instance.addField("Param", sound.param);
+        
+
+        context.lookup.put(sound.uid, thing);
+        context.things.add(thing);
+
+        return thing;
+    }
+
     public static Thing addScoreBubble(LoadContext context, ScoreBubble bubble)
     {
         Thing thing = context.loader.getGameAsset(context, PS3Asset.SCORE_BUBBLE)[0];
@@ -535,7 +618,7 @@ public class PartConverter
         Matrix4f wpos = pos.worldPosition;
 
         Vector3f translation = bubble.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
-        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness;
+        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
         wpos.setTranslation(translation);
         
         pos.worldPosition = wpos;
@@ -554,7 +637,7 @@ public class PartConverter
         PPos pos = thing.getPart(Part.POS);
         Matrix4f wpos = pos.worldPosition;
         Vector3f translation = bubble.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
-        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness;
+        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
         wpos.setTranslation(translation);
 
         pos.worldPosition = wpos;
@@ -570,6 +653,135 @@ public class PartConverter
 
         context.lookup.put(bubble.uid, thing);
         context.things.add(thing);
+
+        return thing;
+    }
+    
+    public static Thing addLevelKey(LoadContext context, LevelKey levelkey)
+    {
+        Thing thing = context.loader.getGameAsset(context, PS3Asset.LEVEL_KEY)[0];
+        Vector3f translation = levelkey.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+
+        PPos pos = thing.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        thing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
+        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
+        wpos.setTranslation(translation);
+        wpos.rotateZ(levelkey.angle);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        context.lookup.put(levelkey.uid, thing);
+        context.things.add(thing);
+
+        /*
+        PGameplayData data = thing.getPart(Part.GAMEPLAY_DATA);
+        ResourceDescriptor link = ResourceConverter.getLevel(context, levelkey.linkLevel);
+        if (link != null)
+        {
+            data.keyLink = new keyLink();
+            data.keyLink.slotNumber = link;
+        }
+        */
+
+        context.lookup.put(levelkey.uid, thing);
+        context.things.add(thing);
+
+        return thing;
+    }
+    
+    public static Thing addCreatureNavigator(LoadContext context, CreatureNavigator navigator)
+    {
+        Thing thing = context.loader.getGameAsset(context, PS3Asset.CREATURE_NAVIGATOR)[0];
+        Vector3f translation = navigator.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+
+        PPos pos = thing.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        wpos.setTranslation(translation);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        context.lookup.put(navigator.uid, thing);
+        context.things.add(thing);
+
+        return thing;
+    }
+    
+    public static Thing addCreatureBrain(LoadContext context, CreatureBrain brain, int type)
+    {
+        PS3Asset assetType = PS3Asset.CREATURE_BRAIN_UNPROTECTED;
+        if(type == 1) { assetType = PS3Asset.CREATURE_BRAIN_PROTECTED; }
+
+        Thing brainThing = context.loader.getGameAsset(context, assetType)[0];
+        Thing resourceThing = context.loader.getGameAsset(context, assetType)[1];
+        Vector3f translation = brain.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+
+        PPos pos = brainThing.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        brainThing.<PShape>getPart(Part.SHAPE).thickness = 90.0f;
+        translation.z -= brainThing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
+        wpos.setTranslation(translation);
+        wpos.rotateZ(brain.angle);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        brainThing.<PCreature>getPart(Part.CREATURE).resourceThing = resourceThing;
+
+        context.lookup.put(brain.uid, brainThing);
+        context.things.add(brainThing);
+        
+        PPos resource_pos = resourceThing.getPart(Part.POS);
+        Matrix4f resource_wpos = resource_pos.worldPosition;
+
+        resource_pos.worldPosition = resource_wpos;
+        resource_pos.localPosition = resource_wpos;
+
+        context.lookup.put(brain.uid, resourceThing);
+        context.things.add(resourceThing);
+
+        return brainThing;
+    }
+
+    public static Thing addCreaturePiece(LoadContext context, CreaturePiece piece, int type)
+    {
+        PS3Asset assetType = PS3Asset.CREATURE_WHEEL;
+        if(type == 1) { assetType = PS3Asset.CREATURE_LEG; }
+
+        Thing thing = context.loader.getGameAsset(context, assetType)[0];
+        Vector3f translation = piece.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+
+        PPos pos = thing.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        thing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
+        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
+        wpos.setTranslation(translation);
+        wpos.rotateZ(piece.angle);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        context.lookup.put(piece.uid, thing);
+        context.things.add(thing);
+        
+        /*
+        PEnemy enemy = thing.getPart(Part.ENEMY);
+        Thing anim_thing = enemy.animThing;
+
+        PPos anim_pos = anim_thing.getPart(Part.POS);
+        Matrix4f anim_wpos = anim_pos.worldPosition;
+        anim_wpos.setTranslation(translation);
+        
+        anim_pos.worldPosition = anim_wpos;
+        anim_pos.localPosition = anim_wpos;
+        
+        UID anim_uid = piece.uid.getHash();
+
+        context.lookup.put(anim_uid, anim_thing);
+        context.things.add(anim_thing);
+        */
 
         return thing;
     }
@@ -661,6 +873,24 @@ public class PartConverter
         }
 
         return things[0];
+    }
+    
+    public static Thing addMagicEye(LoadContext context, MagicEye eye)
+    {
+        Thing thing = context.loader.getGameAsset(context, PS3Asset.MAGIC_EYE)[0];
+        Vector3f translation = eye.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+
+        PPos pos = thing.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        wpos.setTranslation(translation);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        context.lookup.put(eye.uid, thing);
+        context.things.add(thing);
+
+        return thing;
     }
 
     public static Thing addMagneticKey(LoadContext context, MagneticKey key)
