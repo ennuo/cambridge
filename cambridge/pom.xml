@@ -20,13 +20,6 @@
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>mizuk.ai</id>
-            <url>file://D:/mvn</url>
-        </repository>
-    </repositories>
-
     <build>
         <plugins>
             <plugin>
@@ -86,6 +79,8 @@
             <groupId>ennuo</groupId>
             <artifactId>cwlib</artifactId>
             <version>0.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/cwlib.jar</systemPath>
         </dependency>
     </dependencies>
 </project>

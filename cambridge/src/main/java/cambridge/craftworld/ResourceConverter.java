@@ -37,6 +37,8 @@ import cwlib.util.Colors;
 import org.joml.*;
 
 import javax.imageio.ImageIO;
+import javax.management.RuntimeErrorException;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -532,7 +534,7 @@ public class ResourceConverter
                 {
                     System.out.println("[ResourceConverter::GetItem] Creating FSB for " + metadata.resource + ", this is going to be really slow!");
                     FileIO.write(destinationFilePath.getAbsolutePath(), context.loader.getPSPResource(metadata.resource.replace(".music.biff", ".at3")));
-                    FileIO.write(destinationFilePath.getAbsolutePath(), FMOD.FMODSampleBank.fromAudioFile(context.getLoosePath() + audioRowPath));
+                    FileIO.write(destinationFilePath.getAbsolutePath(), FMOD.FMODSampleBank.fromAudioFile(destinationFilePath.getAbsolutePath()));
                 }
 
                 details.type = EnumSet.of(InventoryObjectType.MUSIC);

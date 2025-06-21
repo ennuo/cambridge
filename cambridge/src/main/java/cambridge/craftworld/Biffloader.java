@@ -1122,11 +1122,11 @@ public class Biffloader
             return;
         }
 
-        // if (!CwlibConfiguration.FFMPEG_EXECUTABLE.exists())
-        // {
-        //     System.out.println("Could not find ffmpeg executable at " + CwlibConfiguration.FFMPEG_EXECUTABLE.getAbsolutePath());
-        //     return;
-        // }
+        if (!CwlibConfiguration.FFMPEG_EXECUTABLE.exists())
+        {
+            System.out.println("Could not find ffmpeg executable at " + CwlibConfiguration.FFMPEG_EXECUTABLE.getAbsolutePath());
+            return;
+        }
     
         String installConfigJsonData = new String(FileIO.read(installConfigFilePath.getAbsolutePath()));
         InstallConfig config = new GsonBuilder().create().fromJson(installConfigJsonData, InstallConfig.class);
