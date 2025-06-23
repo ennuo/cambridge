@@ -45,6 +45,9 @@ public enum ElementType
     ENTRANCE("ENTR", GameObject.class),
     CHECKPOINT("CHKP", GameObject.class),
     SCOREBOARD("SCBD", Scoreboard.class),
+    START_GATE("STGT"),
+    FINISH_GATE("FNGT"),
+    
     BUTTON("BUTN", Button.class),
 
     MAGNETIC_KEY("MAGK", MagneticKey.class),
@@ -73,6 +76,7 @@ public enum ElementType
 
     EMITTER("EMIT", Emitter.class),
     MESH("MERO", MeshEntity.class),
+    PHYSICS("PHYS", PhysicsChunkEntity.class),
 
     MUSIC("MUSC", Music.class),
     SOUND_OBJECT("AUDO", SoundObject.class),

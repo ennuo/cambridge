@@ -39,6 +39,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 
 public class PartConverter
 {
@@ -229,6 +230,19 @@ public class PartConverter
 
 
         
+        ResourceDescriptor cardboard_fat = new ResourceDescriptor(10813, ResourceType.BEVEL);
+        ResourceDescriptor cardboard_thin = new ResourceDescriptor(10792, ResourceType.BEVEL);
+        if(material.bevel != null && Objects.equals(material.bevel, cardboard_fat))
+        {
+            PShape thing_shape = thing.getPart(Part.SHAPE);
+            PGeneratedMesh thing_mesh = thing.getPart(Part.GENERATED_MESH);
+            if(thing_shape.thickness <= 20.0f)
+            {
+                //System.out.println(thing_shape.thickness);
+                thing_mesh.bevel = cardboard_thin;
+            }
+        }
+
         // if (shape.massDepth == 2.0f) translation.z = -100.0f;
         // else if (shape.massDepth == 1.0f)
         //     translation.z = (translation.z > -50.0f) ? 0.0F : -200.0f;
@@ -247,6 +261,108 @@ public class PartConverter
         thing.setPart(Part.POS, new PPos(transform));
 
         context.lookup.put(landscape.uid, thing);
+        context.things.add(thing);
+
+        return thing;
+    }
+    
+    public static Thing addPhysics(LoadContext context, PhysicsChunkEntity physics)
+    {
+        Vector3f com = new Vector3f();
+        for (Vector3f vertex : physics.mesh.vertices)
+        {
+            vertex.mul(WORLD_SCALE);
+            vertex.z = 0.0f;
+            com.add(vertex);
+        }
+
+        com.div(physics.mesh.vertices.length);
+
+        MaterialLookupData material = MaterialLookupData.MLUT.getOrDefault(
+            (physics.lethalType == cambridge.enums.LethalType.GAS) ?
+                physics.mesh.oldMaterialUID : physics.mesh.materialUID
+            , MaterialLookupData.MLUT.get(MaterialLookupData.DEFAULT_MATERIAL_UID));
+
+        Thing thing = context.getEmptyThing();
+
+        PShape shape = new PShape(physics.mesh.vertices);
+        shape.soundEnumOverride = material.soundEnumOverride;
+        shape.COM.setColumn(3, new Vector4f(com, 1.0f));
+
+        shape.material = physics.mesh.objectType == ObjectType.STATIC 
+        ? material.staticPhysicsResource : material.physicsResource;
+
+        // if (landscape.mesh.objectType == ObjectType.STATIC)
+        //     thing.<PBody>getPart(Part.BODY).frozen = -1;
+
+        thing.setPart(Part.BODY, new PBody());
+        thing.setPart(Part.SHAPE, shape);
+
+        // if (landscape.mesh.massDepth >= 0.3)
+        // {
+        //     shape.massDepth = 2.0f;
+        //     shape.thickness = 190.0f;
+        // }
+        // else if (landscape.mesh.massDepth >= 0.2)
+        // {
+        //     shape.massDepth = 1.0f;
+        //     shape.thickness = 90.0f;
+        // }
+        // else
+        // {
+        //     shape.massDepth = 0.2f;
+        //     shape.thickness = 10.0f;
+        // }
+
+        LethalType lethality = LethalType.NOT;
+        switch (physics.lethalType)
+        {
+            case ELECTRICITY:
+                lethality = LethalType.ELECTRIC;
+                break;
+            case FIRE:
+                lethality = LethalType.FIRE;
+                break;
+            case GAS:
+                lethality = LethalType.GAS;
+                break;
+            case SPIKE:
+                lethality = LethalType.SPIKE;
+                break;
+            case CRUSH:
+                lethality = LethalType.CRUSH;
+                break;
+            default:
+                break;
+        }
+        shape.lethalType = lethality;
+
+        Vector3f translation =
+            physics.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+
+        float front = (float) translation.z;
+        float back = front - (physics.mesh.massDepth * WORLD_SCALE);
+        shape.massDepth = (front - back) / 200.0f;
+        translation.z = UpdateFrontBack(shape, front, back);
+
+        // if (shape.massDepth == 2.0f) translation.z = -100.0f;
+        // else if (shape.massDepth == 1.0f)
+        //     translation.z = (translation.z > -50.0f) ? 0.0F : -200.0f;
+        // else
+        // {
+        //     if (translation.z < -200)
+        //         translation.z = -300.0f;
+        //     else if (translation.z < 0)
+        //         translation.z = -100;
+        //     else
+        //         translation.z = 100;
+        // }
+
+        Matrix4f transform = new Matrix4f().identity().setTranslation(translation);
+        transform.rotateZ(physics.angle);
+        thing.setPart(Part.POS, new PPos(transform));
+
+        context.lookup.put(physics.uid, thing);
         context.things.add(thing);
 
         return thing;
@@ -378,8 +494,32 @@ public class PartConverter
         );
 
         thing.setPart(Part.SHAPE, shape);
+        // Quick fix to prevent crashing
+        if(object.mesh.vertices != null) { thing.setPart(Part.SHAPE, shape); }
         thing.setPart(Part.RENDER_MESH, mesh);
 
+        LethalType lethality = LethalType.NOT;
+        switch (object.lethalType)
+        {
+            case ELECTRICITY:
+                lethality = LethalType.ELECTRIC;
+                break;
+            case FIRE:
+                lethality = LethalType.FIRE;
+                break;
+            case GAS:
+                lethality = LethalType.GAS;
+                break;
+            case SPIKE:
+                lethality = LethalType.SPIKE;
+                break;
+            case CRUSH:
+                lethality = LethalType.CRUSH;
+                break;
+            default:
+                break;
+        }
+        shape.lethalType = lethality;
 
         context.things.add(thing);
 
@@ -515,7 +655,11 @@ public class PartConverter
         thing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
         translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
         wpos.setTranslation(translation);
-        wpos.rotateZ(thruster.angle);
+        wpos.rotateZ(thruster.angle + (float) Math.PI);
+
+        // Hacky way of getting thruster offset
+        //Vector3f offset_rotation = new Vector3f(0.0f, 0.0f, 0.0f).rotateZ(thruster.angle + (float) Math.PI, new Vector3f (0.0f, 0.0f, 0.0f));
+        //wpos.translate(offset_rotation);
 
         pos.worldPosition = wpos;
         pos.localPosition = wpos;
@@ -581,28 +725,35 @@ public class PartConverter
         pos.worldPosition = wpos;
         pos.localPosition = wpos;
 
-        String sound_path = sound.sfx;
-        String sound_category = sound.sfx;
+        String sound_name = sound.sfx.split("[,\\\\/\\\\.]")[4];
+        String sound_category = sound.sfx.split("[,\\\\/]")[3];
+        String sound_path = "spots/" + sound_category + "/" + sound_name;
+        //System.out.println(sound_path);
 
         thing.<PAudioWorld>getPart(Part.AUDIO_WORLD).soundName = sound_path;
         
-        /*
+        GUID sound_names;
+
+        //Add sound object category for mesh and txt file
         PRenderMesh mesh = thing.getPart(Part.RENDER_MESH);
         switch (sound_category) {
-            case "animals": mesh.mesh = null;  break;
-            case "mechanical": mesh.mesh = null; break;
-            default: mesh.mesh = null; break;
+            case "animals": mesh.mesh = new ResourceDescriptor(30128, ResourceType.MESH); sound_names = new GUID(75895); break;
+            case "mechanical": mesh.mesh = new ResourceDescriptor(43266, ResourceType.MESH); sound_names = new GUID(75908); break;
+            case "comedy": mesh.mesh = new ResourceDescriptor(43268, ResourceType.MESH); sound_names = new GUID(75909); break;
+            case "environmental": mesh.mesh = new ResourceDescriptor(43270, ResourceType.MESH); sound_names = new GUID(75910); break;
+            case "monsters": mesh.mesh = new ResourceDescriptor(43272, ResourceType.MESH); sound_names = new GUID(75911); break;
+            case "human": mesh.mesh = new ResourceDescriptor(43274, ResourceType.MESH); sound_names = new GUID(75912); break;
+            case "transport": mesh.mesh = new ResourceDescriptor(43276, ResourceType.MESH); sound_names = new GUID(75913); break;
+            case "musical": mesh.mesh = new ResourceDescriptor(43278, ResourceType.MESH); sound_names = new GUID(75914); break;
+            case "miscellaneous": mesh.mesh = new ResourceDescriptor(43280, ResourceType.MESH); sound_names = new GUID(75916); break;
+            default: mesh.mesh = new ResourceDescriptor(43278, ResourceType.MESH); sound_names = new GUID(75907); break;
         }
-        */
-
-        //Add sound object txt file
         
         ScriptInstance instance = thing.<PScript>getPart(Part.SCRIPT).instance;
-        //instance.addField("SoundNames", sound.names);
+        instance.addField("SoundNames", sound_names);
         //instance.addField("IsLocal", sound.local);
         //instance.addField("IsLooping", sound.looping);
-        instance.addField("Param", sound.param);
-        
+        //instance.addField("Param", sound.param);
 
         context.lookup.put(sound.uid, thing);
         context.things.add(thing);

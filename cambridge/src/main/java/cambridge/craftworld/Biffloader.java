@@ -717,9 +717,12 @@ public class Biffloader
                 case MESH:
                     PartConverter.addMesh(context, element.load());
                     break;
-                case EMITTER:
-                    PartConverter.addEmitter(context, element.load());
+                case PHYSICS:
+                    PartConverter.addPhysics(context, element.load());
                     break;
+                //case EMITTER:
+                //    PartConverter.addEmitter(context, element.load());
+                //    break;
                 case MUSIC:
                     PartConverter.addMusic(context, element.load());
                     break;

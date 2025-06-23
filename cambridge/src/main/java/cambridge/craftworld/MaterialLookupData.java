@@ -61,37 +61,37 @@ public class MaterialLookupData
     private static void loadDefaultMaterialLookupTable()
     {
         // Cardboard
-        MLUT.put(0xef01e39c, new MaterialLookupData(10724, 2790593263l, 10803, 10813, 0));
+        MLUT.put(0xef01e39c, new MaterialLookupData(10724, 2790593263l, 10803, 10813));
 
         // Wood
-        MLUT.put(0xd3ec228b, new MaterialLookupData(10717, 3643538752l, 10811, 10790, 0));
+        MLUT.put(0xd3ec228b, new MaterialLookupData(10717, 3643538752l, 10811, 10790));
 
         // Sponge
-        MLUT.put(0xc30e5657, new MaterialLookupData(10719, 3479689174l, 10797, 19415, 0));
+        MLUT.put(0xc30e5657, new MaterialLookupData(10719, 3479689174l, 10797, 19415));
 
         // Metal
-        MLUT.put(0x4afec1b, new MaterialLookupData(10716, 4226309871l, 10810, 11396, 0));
+        MLUT.put(0x4afec1b, new MaterialLookupData(10716, 4226309871l, 10810, 11396));
 
         // Polystyrene
-        MLUT.put(0x92eef9bf, new MaterialLookupData(10718, 3962255420l, 10798, 10790, 0));
+        MLUT.put(0x92eef9bf, new MaterialLookupData(10718, 3962255420l, 10798, 10790));
 
         // Glass
-        MLUT.put(0xaadab9f5, new MaterialLookupData(10725, 3905019888l, 10805, 10790, 0));
+        MLUT.put(0xaadab9f5, new MaterialLookupData(10725, 3905019888l, 10805, 10790));
 
         // Pink Floaty
-        MLUT.put(0x9f972dd, new MaterialLookupData(21166, 11987, 22476, 19415, 0));
+        MLUT.put(0x9f972dd, new MaterialLookupData(21166, 11987, 22476, 19415));
 
         // Peach Floaty
-        MLUT.put(0x7ed83093, new MaterialLookupData(21165, 11987, 51424, 19415, 0));
+        MLUT.put(0x7ed83093, new MaterialLookupData(21165, 11987, 51424, 19415));
 
         // Dissolve
         MLUT.put(0x31b4eb0e, new MaterialLookupData(22011, 2529223588l, 27500));
 
         // Stone / Rock
-        MLUT.put(0xbb31663d, new MaterialLookupData(26602, 3060067881l, 26637, 10790, 0));
+        MLUT.put(0xbb31663d, new MaterialLookupData(26602, 3060067881l, 26637, 10790));
 
         // Damask
-        MLUT.put(0x364d5c24, new MaterialLookupData(10719, 3479689174l, 16670, 10823, 0));
+        MLUT.put(0x364d5c24, new MaterialLookupData(10719, 3479689174l, 16670, 10823));
     }
 
     public ResourceDescriptor physicsResource;
@@ -126,8 +126,18 @@ public class MaterialLookupData
             this.soundEnumOverride = sound;
     }
     
+    public MaterialLookupData(long physics, long staticPhysics, long render, long bevel)
+    {
+        this(physics, staticPhysics, render, bevel, -1);
+    }
+    
     public MaterialLookupData(long physics, long staticPhysics, long render)
     {
         this(physics, staticPhysics, render, -1, -1);
+    }
+    
+    public MaterialLookupData(long physics, long render)
+    {
+        this(physics, -1, render, -1, -1);
     }
 }
