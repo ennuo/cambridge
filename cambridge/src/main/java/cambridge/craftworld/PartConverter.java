@@ -1279,6 +1279,11 @@ public class PartConverter
 
         Vector3f aCOM = aWorldPos.getTranslation(new Vector3f());
         Vector3f bCOM = bWorldPos.getTranslation(new Vector3f());
+    
+        float aAngle = Biffloader.GetWorldAngle(aWorldPos);
+        float bAngle = Biffloader.GetWorldAngle(bWorldPos);
+        float offsetAngle = aAngle - bAngle;
+        //System.out.println("offset angle: " + offsetAngle);
 
         PJoint part = thing.getPart(Part.JOINT);
         if (joint.visibility != 0)

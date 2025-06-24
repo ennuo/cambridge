@@ -61,6 +61,8 @@ public enum ElementType
     CREATURE_LEG("LEG ", CreaturePiece.class),
     CREATURE_NAVIGATOR("CNAV", CreatureNavigator.class),
     MAGIC_EYE("MAGE", MagicEye.class),
+    
+    TRIGGER_SHOCK_BOMB("TSKB", ShockBomb.class),
     IMPACT_SHOCK_BOMB("ISKB", ShockBomb.class),
     IMPACT_MINI_BOMB("IMIB", ShockBomb.class),
 
