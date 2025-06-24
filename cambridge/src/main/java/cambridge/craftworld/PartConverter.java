@@ -1401,14 +1401,7 @@ public class PartConverter
                 (float) Math.atan2(joint.aDirection.y, joint.aDirection.x) - 1.57079f;
             part.bAngleOffset =
                 (float) Math.atan2(joint.bDirection.y, joint.bDirection.x) + 1.57079f;
-            part.slideDir = joint.bDirection.normalize(new Vector3f());
             part.length = joint.length * 50.0f * 20.0f;
-            
-            Vector4f aContactPoint = new Vector4f(joint.contactA, 1.0f).mul(aWorldPos);
-            Vector4f bContactPoint = new Vector4f(joint.contactB, 1.0f).mul(bWorldPos);
-            Vector4f slideDir4 = bContactPoint.sub(aContactPoint).normalize().mul(aWorldPos.invert(new Matrix4f()));
-            part.slideDir = new Vector3f(slideDir4.x, slideDir4.y, slideDir4.z);
-            //part.slideDir.rotateZ(bAngle);
         }
 
         part.aContact.mul(aScaleRotMat);
@@ -1572,6 +1565,14 @@ public class PartConverter
             part.strength = (float) Math.pow(strength, 3.0);
             part.length = 0.0f;
             part.animationRange = bolt.angle + offsetAngle;
+        }
+
+        if (!joint.isBolt)
+        {
+            Vector4f aContactPoint = new Vector4f(part.aContact, 1.0f).mul(aWorldPos);
+            Vector4f bContactPoint = new Vector4f(part.bContact, 1.0f).mul(bWorldPos);
+            Vector4f slideDir4 = bContactPoint.sub(aContactPoint).normalize().mul(aWorldPos.invert(new Matrix4f()));
+            part.slideDir = new Vector3f(slideDir4.x, slideDir4.y, slideDir4.z);
         }
 
         context.lookup.put(joint.uid, thing);
