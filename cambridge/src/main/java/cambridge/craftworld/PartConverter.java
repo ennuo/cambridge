@@ -117,6 +117,32 @@ public class PartConverter
         shape.thickness = (front - back) / 2.0f;
         return (float) front - shape.thickness;
     }
+
+    public static LethalType getGasColor(ResourceDescriptor gmat)
+    {
+        LethalType lethality = LethalType.GAS;
+        if(gmat.getGUID().equals(new GUID(10805)))
+        {
+            lethality = LethalType.GAS2;
+        }
+        if(gmat.getGUID().equals(new GUID(44711)))
+        {
+            lethality = LethalType.GAS3;
+        }
+        if(gmat.getGUID().equals(new GUID(44712)))
+        {
+            lethality = LethalType.GAS4;
+        }
+        if(gmat.getGUID().equals(new GUID(44702)))
+        {
+            lethality = LethalType.GAS5;
+        }
+        if(gmat.getGUID().equals(new GUID(44703)))
+        {
+            lethality = LethalType.GAS6;
+        }
+        return lethality;
+    }
     
     public static Thing addLandscape(LoadContext context, LandChunkEntity landscape)
     {
@@ -208,7 +234,7 @@ public class PartConverter
                 lethality = LethalType.FIRE;
                 break;
             case GAS:
-                lethality = LethalType.GAS;
+                lethality = getGasColor(material.renderMaterial);
                 break;
             case SPIKE:
                 lethality = LethalType.SPIKE;
@@ -649,7 +675,11 @@ public class PartConverter
         Vector3f translation = thruster.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
 
         PScript script = thing.getPart(Part.SCRIPT);
-        script.instance.memberData.put("Strength", thruster.strength * 50.0f);
+        //System.out.println("thruster strength " + thruster.strength);
+        //System.out.println("thruster active " + thruster.active);
+        script.instance.memberData.put("Strength", thruster.strength * 4.0f);
+        script.instance.memberData.put("HasIgnited", thruster.active != 0);
+        script.instance.memberData.put("ModScale", (float) thruster.active);
 
         PPos pos = thing.getPart(Part.POS);
         Matrix4f wpos = pos.worldPosition;
@@ -912,25 +942,46 @@ public class PartConverter
         PPos pos = brainThing.getPart(Part.POS);
         Matrix4f wpos = pos.worldPosition;
         brainThing.<PShape>getPart(Part.SHAPE).thickness = 90.0f;
-        translation.z -= brainThing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
+        translation.z -= brainThing.<PShape>getPart(Part.SHAPE).thickness - 10.0f;
         wpos.setTranslation(translation);
-        wpos.rotateZ(brain.angle);
+        wpos.rotateY(-brain.angle);
 
         pos.worldPosition = wpos;
         pos.localPosition = wpos;
 
+        PCreature creature = brainThing.<PCreature>getPart(Part.CREATURE);
+        
+        creature.playerAwareness = brain.behavior;
+        creature.awarenessRadius = brain.radius * WORLD_SCALE;
+        creature.reactToLethal = brain.vulnerable != 0;
+        creature.speedModifier = brain.movement_speed;
+        creature.jumpInterval = (int) (brain.jump_interval * 30.0f);
+        creature.jumpIntervalPhase = (int) (brain.jump_phase * 30.0f);
+        creature.jumpModifier = brain.jump_modifier;
+        
+        /*
+        System.out.println("behavior " + brain.behavior);
+        System.out.println("radius " + brain.radius);
+        System.out.println("vulnerable " + brain.vulnerable);
+        System.out.println("movement_speed " + brain.movement_speed);
+        System.out.println("jump_interval " + brain.jump_interval);
+        System.out.println("jump_phase " + brain.jump_phase);
+        System.out.println("strength " + brain.strength);
+        */
+
+        brainThing.setPart(Part.GROUP, new PGroup());
+        resourceThing.groupHead = brainThing;
+        resourceThing.parent = brainThing;
         brainThing.<PCreature>getPart(Part.CREATURE).resourceThing = resourceThing;
 
-        context.lookup.put(brain.uid, brainThing);
+        //context.lookup.put(brain.uid, brainThing);
         context.things.add(brainThing);
         
         PPos resource_pos = resourceThing.getPart(Part.POS);
-        Matrix4f resource_wpos = resource_pos.worldPosition;
+        Vector3f resource_translation = resource_pos.localPosition.getTranslation(new Vector3f());
+        resource_pos.worldPosition = wpos.translate(resource_translation);
+        resourceThing.setPart(Part.TRIGGER, new PTrigger(TriggerType.RADIUS, 1.3f));
 
-        resource_pos.worldPosition = resource_wpos;
-        resource_pos.localPosition = resource_wpos;
-
-        context.lookup.put(brain.uid, resourceThing);
         context.things.add(resourceThing);
 
         return brainThing;
@@ -941,22 +992,36 @@ public class PartConverter
         PS3Asset assetType = PS3Asset.CREATURE_WHEEL;
         if(type == 1) { assetType = PS3Asset.CREATURE_LEG; }
 
-        Thing thing = context.loader.getGameAsset(context, assetType)[0];
+        Thing pieceThing = context.loader.getGameAsset(context, assetType)[0];
+        Thing animThing = context.loader.getGameAsset(context, assetType)[1];
         Vector3f translation = piece.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
 
-        PPos pos = thing.getPart(Part.POS);
+        PPos pos = pieceThing.getPart(Part.POS);
         Matrix4f wpos = pos.worldPosition;
-        thing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
-        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
+        pieceThing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
+        translation.z -= pieceThing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
         wpos.setTranslation(translation);
         wpos.rotateZ(piece.angle);
 
         pos.worldPosition = wpos;
         pos.localPosition = wpos;
 
-        context.lookup.put(piece.uid, thing);
-        context.things.add(thing);
+        context.lookup.put(piece.uid, pieceThing);
+        context.things.add(pieceThing);
         
+        PPos anim_pos = animThing.getPart(Part.POS);
+        Matrix4f anim_wpos = anim_pos.worldPosition;
+
+        anim_pos.worldPosition = wpos;
+        anim_pos.localPosition = wpos;
+        
+        pieceThing.setPart(Part.GROUP, new PGroup());
+        animThing.groupHead = pieceThing;
+        animThing.parent = pieceThing;
+        pieceThing.<PEnemy>getPart(Part.ENEMY).animThing = animThing;
+        
+        context.things.add(animThing);
+
         /*
         PEnemy enemy = thing.getPart(Part.ENEMY);
         Thing anim_thing = enemy.animThing;
@@ -974,7 +1039,7 @@ public class PartConverter
         context.things.add(anim_thing);
         */
 
-        return thing;
+        return pieceThing;
     }
 
     public static String checkButtonPrompt(String text)
@@ -1338,6 +1403,12 @@ public class PartConverter
                 (float) Math.atan2(joint.bDirection.y, joint.bDirection.x) + 1.57079f;
             part.slideDir = joint.bDirection.normalize(new Vector3f());
             part.length = joint.length * 50.0f * 20.0f;
+            
+            Vector4f aContactPoint = new Vector4f(joint.contactA, 1.0f).mul(aWorldPos);
+            Vector4f bContactPoint = new Vector4f(joint.contactB, 1.0f).mul(bWorldPos);
+            Vector4f slideDir4 = bContactPoint.sub(aContactPoint).normalize().mul(aWorldPos.invert(new Matrix4f()));
+            part.slideDir = new Vector3f(slideDir4.x, slideDir4.y, slideDir4.z);
+            //part.slideDir.rotateZ(bAngle);
         }
 
         part.aContact.mul(aScaleRotMat);
@@ -1346,21 +1417,11 @@ public class PartConverter
         if (joint instanceof Rod)
         {
             part.stiff = ((Rod) joint).stiff;
-            
-            Vector4f aContactPoint = new Vector4f(joint.contactA, 1.0f).mul(aWorldPos);
-            Vector4f bContactPoint = new Vector4f(joint.contactB, 1.0f).mul(bWorldPos);
-            Vector4f slideDir4 = bContactPoint.sub(aContactPoint).normalize().mul(aWorldPos);
-            part.slideDir = new Vector3f(slideDir4.x, slideDir4.y, slideDir4.z);
         }
         else if (joint instanceof Spring)
         {
             Spring spring = ((Spring) joint);
             part.stiff = spring.stiff;
-            
-            Vector4f aContactPoint = new Vector4f(joint.contactA, 1.0f).mul(aWorldPos);
-            Vector4f bContactPoint = new Vector4f(joint.contactB, 1.0f).mul(bWorldPos);
-            Vector4f slideDir4 = bContactPoint.sub(aContactPoint).normalize().mul(aWorldPos);
-            part.slideDir = new Vector3f(slideDir4.x, slideDir4.y, slideDir4.z);
 
             float v;
             if (spring.strength < 0.065f)
@@ -1374,7 +1435,6 @@ public class PartConverter
         else if (joint instanceof Elastic)
         {
             Elastic elastic = ((Elastic) joint);
-            part.stiff = elastic.stiff;
             part.strength = (float) Math.pow(elastic.strength * 10.0f, 3.0);
         }
         else if (joint instanceof Winch)
@@ -1424,10 +1484,7 @@ public class PartConverter
             part.animationPhase = piston.sync * 30.0f;
             part.stiff = piston.stiff;
             
-            Vector4f aContactPoint = new Vector4f(joint.contactA, 1.0f).mul(aWorldPos);
-            Vector4f bContactPoint = new Vector4f(joint.contactB, 1.0f).mul(bWorldPos);
-            Vector4f slideDir4 = bContactPoint.sub(aContactPoint).normalize().mul(aWorldPos);
-            part.slideDir = new Vector3f(slideDir4.x, slideDir4.y, slideDir4.z);
+            part.angle = offsetAngle;
 
             part.strength =
                 (float) Math.pow(((-1.750184 / (piston.strength + 0.1750153) + 10.00018) / 10.0f), 3.0);
@@ -1455,7 +1512,9 @@ public class PartConverter
             MotorBolt bolt = (MotorBolt) joint;
 
             part.length = 0.0f;
-            part.animationSpeed = (bolt.speed * 4.0f) * 0.0174532925f;
+            //part.animationSpeed = (bolt.speed * 4.0f) * 0.0174532925f;
+            // What number do I need to set the speed here accurately? no idea!
+            part.animationSpeed = (bolt.speed * 1.91f) * 0.0174532925f;
             if (bolt.direction != 1)
                 part.animationSpeed = -part.animationSpeed;
             part.strength =
@@ -1508,6 +1567,7 @@ public class PartConverter
                             (values[offset + 2] - values[offset]);
             }
 
+            part.angle = bolt.angle + offsetAngle;
 
             part.strength = (float) Math.pow(strength, 3.0);
             part.length = 0.0f;
