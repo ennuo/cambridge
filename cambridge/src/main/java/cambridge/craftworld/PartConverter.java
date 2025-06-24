@@ -19,6 +19,7 @@ import cambridge.util.Crypto;
 import cwlib.enums.*;
 import cwlib.resources.RPlan;
 import cwlib.resources.RScript;
+import cwlib.structs.slot.SlotID;
 import cwlib.structs.things.Thing;
 import cwlib.structs.things.components.EggLink;
 import cwlib.structs.things.components.decals.Decal;
@@ -669,6 +670,30 @@ public class PartConverter
 
         return thing;
     }
+    
+    public static Thing addShockBomb(LoadContext context, ShockBomb shockBomb, int type)
+    {
+        PS3Asset assetType = PS3Asset.TRIGGER_SHOCK_BOMB;
+        if(type == 1) { assetType = PS3Asset.IMPACT_SHOCK_BOMB; }
+
+        Thing thing = context.loader.getGameAsset(context, assetType)[0];
+        Vector3f translation = shockBomb.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+
+        PPos pos = thing.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        thing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
+        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
+        wpos.setTranslation(translation);
+        wpos.rotateZ(shockBomb.angle + (float) Math.PI);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        context.lookup.put(shockBomb.uid, thing);
+        context.things.add(thing);
+
+        return thing;
+    }
 
     public static Thing addMusic(LoadContext context, Music music)
     {
@@ -728,9 +753,30 @@ public class PartConverter
         String sound_name = sound.sfx.split("[,\\\\/\\\\.]")[4];
         String sound_category = sound.sfx.split("[,\\\\/]")[3];
         String sound_path = "spots/" + sound_category + "/" + sound_name;
-        //System.out.println(sound_path);
+        //System.out.println(sound.sfx);
 
-        thing.<PAudioWorld>getPart(Part.AUDIO_WORLD).soundName = sound_path;
+        PAudioWorld audioWorld = thing.<PAudioWorld>getPart(Part.AUDIO_WORLD);
+        audioWorld.soundName = sound_path;
+        switch (sound.playMode) {
+            case 1:
+                audioWorld.playMode = PlayMode.TRIGGER_BY_DESTROY;
+                break;
+            case 2:
+                audioWorld.playMode = PlayMode.TRIGGER_BY_SWITCH;
+                break;
+            case 3:
+                audioWorld.playMode = PlayMode.TRIGGER_BY_IMPACT;
+                break;
+            default:
+                audioWorld.playMode = PlayMode.TRIGGER_BY_FALLOFF;
+                break;
+        }
+        audioWorld.hideInPlayMode = sound.visibility != 0;
+        
+        //System.out.println("sound radius: " + sound.radius);
+        float param = (float) sound.param / 0x7FFF;
+        //System.out.println("sound param: " + param);
+        audioWorld.initialParam1 = param;
         
         GUID sound_names;
 
@@ -751,9 +797,10 @@ public class PartConverter
         
         ScriptInstance instance = thing.<PScript>getPart(Part.SCRIPT).instance;
         instance.addField("SoundNames", sound_names);
-        //instance.addField("IsLocal", sound.local);
+        instance.addField("HideInPlayMode", sound.visibility != 0);
+        instance.addField("PlayMode", sound.playMode);
         //instance.addField("IsLooping", sound.looping);
-        //instance.addField("Param", sound.param);
+        instance.addField("Param", param);
 
         context.lookup.put(sound.uid, thing);
         context.things.add(thing);
@@ -823,18 +870,11 @@ public class PartConverter
         pos.worldPosition = wpos;
         pos.localPosition = wpos;
 
-        context.lookup.put(levelkey.uid, thing);
-        context.things.add(thing);
-
-        /*
+        thing.setPart(Part.TRIGGER, new PTrigger(TriggerType.RADIUS, 30.0f));
+        thing.setPart(Part.SCRIPT, new PScript(new ResourceDescriptor(17022, ResourceType.SCRIPT)));
+        thing.setPart(Part.GAMEPLAY_DATA, new PGameplayData());
         PGameplayData data = thing.getPart(Part.GAMEPLAY_DATA);
-        ResourceDescriptor link = ResourceConverter.getLevel(context, levelkey.linkLevel);
-        if (link != null)
-        {
-            data.keyLink = new keyLink();
-            data.keyLink.slotNumber = link;
-        }
-        */
+        data.keyLink = new SlotID(SlotType.DEVELOPER, 0);
 
         context.lookup.put(levelkey.uid, thing);
         context.things.add(thing);
@@ -937,6 +977,16 @@ public class PartConverter
         return thing;
     }
 
+    public static String checkButtonPrompt(String text)
+    {
+        text = text
+        .replaceAll("", "<icon cross>")
+        .replaceAll("", "<icon circle>")
+        .replaceAll("", "<icon r1>")
+        .replaceAll("", "<icon lstick>");
+        return text;
+    }
+
     public static Thing addMagicMouth(LoadContext context, MagicMouth speech)
     {
         Thing[] things = context.loader.getGameAsset(context, PS3Asset.MAGIC_MOUTH);
@@ -987,6 +1037,8 @@ public class PartConverter
                     throw new RuntimeException("Unhandled language ID, this is probably my fault?");
 
                 String text = speech.translations.get(languageTag);
+                //Check for button prompts
+                text = checkButtonPrompt(text);
                 context.loader.addTranslationTag(languageId, tag, text);
             }
 
@@ -1064,6 +1116,10 @@ public class PartConverter
 
         PSwitchKey part = thing.getPart(Part.SWITCH_KEY);
         part.colorIndex = key.colorIndex - 2;
+        
+        ScriptInstance instance = thing.<PScript>getPart(Part.SCRIPT).instance;
+        instance.addField("HideInPlayMode", key.visibility != 0);
+
 
         PRenderMesh mesh = thing.getPart(Part.RENDER_MESH);
         Color color = Color.getHSBColor(((part.colorIndex % 8) / 9.0f) + (2.0f / 3.0f), 0.75f,
@@ -1283,11 +1339,24 @@ public class PartConverter
         part.bContact.mul(bScaleRotMat);
 
         if (joint instanceof Rod)
+        {
             part.stiff = ((Rod) joint).stiff;
+            
+            Vector4f aContactPoint = new Vector4f(joint.contactA, 1.0f).mul(aWorldPos);
+            Vector4f bContactPoint = new Vector4f(joint.contactB, 1.0f).mul(bWorldPos);
+            Vector4f slideDir4 = bContactPoint.sub(aContactPoint).normalize().mul(aWorldPos);
+            part.slideDir = new Vector3f(slideDir4.x, slideDir4.y, slideDir4.z);
+        }
         else if (joint instanceof Spring)
         {
             Spring spring = ((Spring) joint);
             part.stiff = spring.stiff;
+            
+            Vector4f aContactPoint = new Vector4f(joint.contactA, 1.0f).mul(aWorldPos);
+            Vector4f bContactPoint = new Vector4f(joint.contactB, 1.0f).mul(bWorldPos);
+            Vector4f slideDir4 = bContactPoint.sub(aContactPoint).normalize().mul(aWorldPos);
+            part.slideDir = new Vector3f(slideDir4.x, slideDir4.y, slideDir4.z);
+
             float v;
             if (spring.strength < 0.065f)
             {
@@ -1349,6 +1418,11 @@ public class PartConverter
             part.animationPause = piston.pause * 30.0f;
             part.animationPhase = piston.sync * 30.0f;
             part.stiff = piston.stiff;
+            
+            Vector4f aContactPoint = new Vector4f(joint.contactA, 1.0f).mul(aWorldPos);
+            Vector4f bContactPoint = new Vector4f(joint.contactB, 1.0f).mul(bWorldPos);
+            Vector4f slideDir4 = bContactPoint.sub(aContactPoint).normalize().mul(aWorldPos);
+            part.slideDir = new Vector3f(slideDir4.x, slideDir4.y, slideDir4.z);
 
             part.strength =
                 (float) Math.pow(((-1.750184 / (piston.strength + 0.1750153) + 10.00018) / 10.0f), 3.0);
@@ -1389,7 +1463,7 @@ public class PartConverter
                 (float) Math.pow(((-1.750184 / (bolt.tightness + 0.1750153) + 10.00018) / 10.0f), 3.0);
             part.length = 0.0f;
             part.animationRange = bolt.rotation;
-            part.angle = bolt.angle;
+            part.angle = bolt.angle + offsetAngle;
             if (bolt.flipperMotion != 0)
                 part.animationPattern = 2;
             if (bolt.flipperMotion == 1 || bolt.backwards)
@@ -1432,7 +1506,7 @@ public class PartConverter
 
             part.strength = (float) Math.pow(strength, 3.0);
             part.length = 0.0f;
-            part.animationRange = bolt.angle;
+            part.animationRange = bolt.angle + offsetAngle;
         }
 
         context.lookup.put(joint.uid, thing);

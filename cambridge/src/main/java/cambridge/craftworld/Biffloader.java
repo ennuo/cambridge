@@ -691,7 +691,7 @@ public class Biffloader
                     PartConverter.addCreatureBrain(context, element.load(), 0);
                     break;
                 case CREATURE_BRAIN_PROTECTED:
-                    PartConverter.addCreatureBrain(context, element.load(), 0);
+                    PartConverter.addCreatureBrain(context, element.load(), 1);
                     break;
                 case CREATURE_WHEEL:
                     PartConverter.addCreaturePiece(context, element.load(), 0);
@@ -702,8 +702,11 @@ public class Biffloader
                 case THRUSTER:
                     PartConverter.addThruster(context, element.load());
                     break;
-                case MAGNETIC_KEY:
-                    PartConverter.addMagneticKey(context, element.load());
+                case TRIGGER_SHOCK_BOMB:
+                    PartConverter.addShockBomb(context, element.load(), 0);
+                    break;
+                case IMPACT_SHOCK_BOMB:
+                    PartConverter.addShockBomb(context, element.load(), 1);
                     break;
                 case CAMERA_ZONE:
                     PartConverter.addCameraZone(context, element.load());
@@ -746,6 +749,9 @@ public class Biffloader
                 case GRAB_SWITCH:
                 case TAG_SENSOR:
                     PartConverter.addSwitch(context, element);
+                    break;
+                case MAGNETIC_KEY:
+                    PartConverter.addMagneticKey(context, element.load());
                     break;
                 case OBJECT:
                     PartConverter.addGroup(context, element.load());
