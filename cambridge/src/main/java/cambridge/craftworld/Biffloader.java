@@ -744,6 +744,15 @@ public class Biffloader
                 case SPRUNG_BOLT:
                     PartConverter.addJoint(context, element);
                     break;
+                case BUTTON:
+                    PartConverter.addButtonSwitch(context, element.load());
+                    break;
+                case BINARY_SWITCH:
+                    PartConverter.addLeverSwitch(context, element.load(), 0);
+                    break;
+                case TRINARY_SWITCH:
+                    PartConverter.addLeverSwitch(context, element.load(), 1);
+                    break;
                 case STICKER_SWITCH:
                 case PROXIMITY_SWITCH:
                 case GRAB_SWITCH:

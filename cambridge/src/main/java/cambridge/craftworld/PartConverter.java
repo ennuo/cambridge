@@ -13,6 +13,8 @@ import cambridge.structures.joints.bolts.Bolt;
 import cambridge.structures.joints.bolts.MotorBolt;
 import cambridge.structures.joints.bolts.SprungBolt;
 import cambridge.structures.joints.bolts.WobbleBolt;
+import cambridge.structures.switches.Button;
+import cambridge.structures.switches.LeverSwitch;
 import cambridge.structures.switches.MagneticKey;
 import cambridge.structures.switches.StickerSwitch;
 import cambridge.util.Crypto;
@@ -417,10 +419,164 @@ public class PartConverter
 
     // public static HashMap<String, ArrayList<Vector3f>> modelOffsetPaths = new HashMap<>();
 
+    public static Thing addButtonSwitch(LoadContext context, Button button)
+    {
+        Thing[] things = context.loader.getGameAsset(context, PS3Asset.BUTTON);
+        Thing baseThing = things[0];
+        Thing boneThing = things[1];
+        Thing buttonThing = things[2];
+        //Vector3f translation = button.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+
+        //System.out.println(button.uid);
+        //System.out.println(button.behavior);
+        //System.out.println(button.inverted);
+        //System.out.println(button.activation);
+        //System.out.println(button.baseUid);
+        Thing rootSwitch = context.lookup.get(button.baseUid);
+        context.things.add(rootSwitch);
+        //if(rootSwitch.UID == null) { return null; }
+        
+        PPos pos = rootSwitch.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        rootSwitch.<PShape>getPart(Part.SHAPE).thickness = 90.0f;
+        
+        PPos basePos = pos;
+        PPos bonePos = boneThing.getPart(Part.POS);
+        PPos buttonPos = buttonThing.getPart(Part.POS);
+        //translation.z -= baseThing.<PShape>getPart(Part.SHAPE).thickness;
+        //wpos.setTranslation(translation);
+
+        basePos.worldPosition = wpos;
+        basePos.localPosition = wpos;
+        
+        baseThing.setPart(Part.GROUP, new PGroup());
+        boneThing.groupHead = baseThing;
+        boneThing.parent = baseThing;
+        bonePos.thingOfWhichIAmABone = baseThing;
+        buttonThing.groupHead = baseThing;
+        buttonThing.parent = baseThing;
+
+        bonePos.worldPosition = wpos;
+        bonePos.worldPosition.set(bonePos.localPosition);
+        buttonPos.worldPosition = wpos;
+        buttonPos.worldPosition.mul(buttonPos.localPosition);
+
+        /*
+        PSwitch part = baseThing.getPart(Part.SWITCH);
+
+        ArrayList<SwitchTarget> targets = new ArrayList<>(lever.targets.length);
+        for (int i = 0; i < lever.targets.length; ++i)
+        {
+            Thing target = context.lookup.get(lever.targets[i]);
+            if (target == null)
+            {
+                //System.out.println("[AddSwitches] Couldn't find switch target in list!");
+                continue;
+            }
+            if (target.hasPart(Part.SCRIPT))
+            {
+                PScript script = target.getPart(Part.SCRIPT);
+                ScriptInstance instance = script.instance;
+                if (new GUID(18420).equals(instance.script.getGUID()))
+                    instance.memberData.put("TriggerThing", baseThing);
+            }
+            targets.add(new SwitchTarget(target));
+        }
+        part.outputs[0].targetList = targets;
+        part.outputs[0].activation.activation = 0.0f;
+
+        baseThing.<PSwitch>getPart(Part.SWITCH).referenceThing = leverThing;
+        
+        PPos basePos = rootSwitch.getPart(Part.POS);
+        PPos bonePos = handleThing.getPart(Part.POS);
+        PPos leverPos = leverThing.getPart(Part.POS);
+        Matrix4f wpos = basePos.worldPosition;
+        //translation.z -= baseThing.<PShape>getPart(Part.SHAPE).thickness;
+        */
+
+        Thing buttonGroupThing = context.getEmptyThing();
+        buttonGroupThing.setPart(Part.GROUP, new PGroup());
+        context.things.add(buttonGroupThing);
+
+        baseThing.groupHead = buttonGroupThing;
+        baseThing.groupHead = buttonGroupThing;
+
+        context.lookup.put(button.baseUid, baseThing);
+        context.things.add(baseThing);
+        context.things.add(boneThing);
+        context.things.add(buttonThing);
+
+        return baseThing;
+    }
+    
+    public static Thing addLeverSwitch(LoadContext context, LeverSwitch lever, int type)
+    { 
+        PS3Asset assetType = PS3Asset.BINARY_SWITCH;
+        if(type == 1) { assetType = PS3Asset.TRINARY_SWITCH; }
+
+        Thing[] things = context.loader.getGameAsset(context, assetType);
+        Thing baseThing = things[0];
+        Thing leverThing = things[1];
+        Thing handleThing = things[2];
+        Thing jointThing = things[3];
+
+        /*
+        System.out.println(lever.uid);
+        System.out.println(lever.behavior);
+        System.out.println(lever.inverted);
+        System.out.println(lever.activation);
+        System.out.println(lever.baseuid2);
+        System.out.println(lever.handleUid);
+        System.out.println(lever.baseuid4);
+        */
+
+        /*
+        PSwitch part = baseThing.getPart(Part.SWITCH);
+
+        ArrayList<SwitchTarget> targets = new ArrayList<>(lever.targets.length);
+        for (int i = 0; i < lever.targets.length; ++i)
+        {
+            Thing target = context.lookup.get(lever.targets[i]);
+            if (target == null)
+            {
+                //System.out.println("[AddSwitches] Couldn't find switch target in list!");
+                continue;
+            }
+            if (target.hasPart(Part.SCRIPT))
+            {
+                PScript script = target.getPart(Part.SCRIPT);
+                ScriptInstance instance = script.instance;
+                if (new GUID(18420).equals(instance.script.getGUID()))
+                    instance.memberData.put("TriggerThing", baseThing);
+            }
+            targets.add(new SwitchTarget(target));
+        }
+        part.outputs[0].targetList = targets;
+        part.outputs[0].activation.activation = 0.0f;
+
+        baseThing.<PSwitch>getPart(Part.SWITCH).referenceThing = leverThing;
+        
+        PPos basePos = rootSwitch.getPart(Part.POS);
+        PPos bonePos = handleThing.getPart(Part.POS);
+        PPos leverPos = leverThing.getPart(Part.POS);
+        Matrix4f wpos = basePos.worldPosition;
+        //translation.z -= baseThing.<PShape>getPart(Part.SHAPE).thickness;
+        */
+
+        
+        context.lookup.put(lever.baseuid2, baseThing);
+        context.things.add(baseThing);
+        context.lookup.put(lever.handleUid, handleThing);
+        context.things.add(handleThing);
+        context.things.add(leverThing);
+        context.things.add(jointThing);
+
+        return baseThing;
+    }
+
     public static Thing addMesh(LoadContext context, MeshEntity object)
     {
-        // if (object.model.toLowerCase().contains("gadgets")) return null;
-
+        if (object.model.toLowerCase().contains("pressure_switch_button")) { return null; }
 
         Vector3f com = new Vector3f();
         for (Vector3f vertex : object.mesh.vertices)
@@ -502,6 +658,12 @@ public class PartConverter
 
         thing.setPart(Part.POS, pos);
         thing.setPart(Part.BODY, new PBody());
+        
+        //if (object.model.toLowerCase().contains("pressure_switch") || object.model.toLowerCase().contains("lever_switch"))
+        //{
+        //    context.lookup.put(object.uid, thing);
+        //    return thing;
+        //}
 
         // if (object.mesh.objectType == ObjectType.STATIC)
         //     thing.<PBody>getPart(Part.BODY).frozen = -1;
@@ -650,7 +812,7 @@ public class PartConverter
         Vector3f translation = jetpack.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
 
         PScript script = thing.getPart(Part.SCRIPT);
-        script.instance.memberData.put("TetherLength", jetpack.tetherLength * 50.0f * 100.0f);
+        script.instance.memberData.put("TetherLength", jetpack.tetherLength * WORLD_SCALE);
 
         // Note: need to offset for local pos too
         PPos pos = thing.getPart(Part.POS);
@@ -677,7 +839,7 @@ public class PartConverter
         PScript script = thing.getPart(Part.SCRIPT);
         //System.out.println("thruster strength " + thruster.strength);
         //System.out.println("thruster active " + thruster.active);
-        script.instance.memberData.put("Strength", thruster.strength * 4.0f);
+        script.instance.memberData.put("Strength", Math.min(thruster.strength * 4.0f * (4.0f + (1.0f / 6.0f)), 1.0f));
         script.instance.memberData.put("HasIgnited", thruster.active != 0);
         script.instance.memberData.put("ModScale", (float) thruster.active);
 
@@ -714,7 +876,7 @@ public class PartConverter
         thing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
         translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
         wpos.setTranslation(translation);
-        wpos.rotateZ(shockBomb.angle + (float) Math.PI);
+        wpos.rotateZ(shockBomb.angle);
 
         pos.worldPosition = wpos;
         pos.localPosition = wpos;
@@ -935,8 +1097,11 @@ public class PartConverter
         PS3Asset assetType = PS3Asset.CREATURE_BRAIN_UNPROTECTED;
         if(type == 1) { assetType = PS3Asset.CREATURE_BRAIN_PROTECTED; }
 
-        Thing brainThing = context.loader.getGameAsset(context, assetType)[0];
-        Thing resourceThing = context.loader.getGameAsset(context, assetType)[1];
+        //System.out.println(brain.uid);
+        Thing[] things = context.loader.getGameAsset(context, assetType);
+        Thing brainThing = things[0];
+        Thing resourceThing = things[1];
+
         Vector3f translation = brain.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
 
         PPos pos = brainThing.getPart(Part.POS);
@@ -969,20 +1134,21 @@ public class PartConverter
         System.out.println("strength " + brain.strength);
         */
 
+        /*
         brainThing.setPart(Part.GROUP, new PGroup());
         resourceThing.groupHead = brainThing;
         resourceThing.parent = brainThing;
         brainThing.<PCreature>getPart(Part.CREATURE).resourceThing = resourceThing;
-
-        //context.lookup.put(brain.uid, brainThing);
+        */
+        context.lookup.put(brain.uid, brainThing);
         context.things.add(brainThing);
+        context.things.add(resourceThing);
         
         PPos resource_pos = resourceThing.getPart(Part.POS);
         Vector3f resource_translation = resource_pos.localPosition.getTranslation(new Vector3f());
         resource_pos.worldPosition = wpos.translate(resource_translation);
         resourceThing.setPart(Part.TRIGGER, new PTrigger(TriggerType.RADIUS, 1.3f));
 
-        context.things.add(resourceThing);
 
         return brainThing;
     }
@@ -992,8 +1158,10 @@ public class PartConverter
         PS3Asset assetType = PS3Asset.CREATURE_WHEEL;
         if(type == 1) { assetType = PS3Asset.CREATURE_LEG; }
 
-        Thing pieceThing = context.loader.getGameAsset(context, assetType)[0];
-        Thing animThing = context.loader.getGameAsset(context, assetType)[1];
+        //System.out.println(piece.uid);
+        Thing[] things = context.loader.getGameAsset(context, assetType);
+        Thing pieceThing = things[0];
+        Thing animThing = things[1];
         Vector3f translation = piece.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
 
         PPos pos = pieceThing.getPart(Part.POS);
@@ -1051,6 +1219,29 @@ public class PartConverter
         .replaceAll("", "<icon lstick>");
         return text;
     }
+    
+    public static int checkAudioBank(String gibberish)
+    {
+        /*
+        String sound_name = gibberish.split("[,\\\\_\\\\.]")[2];
+        System.out.println(sound_name);
+        switch (sound_name) {
+            case "bear":
+                return 1;
+            case "bird":
+                return 2;
+            case "chicken":
+                return 3;
+            case "chimp":
+                return 4;
+            case "crocodile":
+                return 5;
+            default:
+                return 0;
+        }
+        */
+        return 0;
+    }
 
     public static Thing addMagicMouth(LoadContext context, MagicMouth speech)
     {
@@ -1090,6 +1281,7 @@ public class PartConverter
 
         ScriptInstance instance = things[0].<PScript>getPart(Part.SCRIPT).instance;
         instance.setField("HideInPlayMode", speech.visibility != 0);
+        instance.setField("CurrVoiceIndex", checkAudioBank(speech.sfx));
 
         // If we're in a developer level, load the translations into the translation table
         if (context.isDeveloperLevel)
@@ -1129,7 +1321,7 @@ public class PartConverter
             instance.setField("CameraEnabled", true);
 
             PCameraTweak tweak = new PCameraTweak();
-            tweak.pitchAngle = new Vector3f(speech.pitchAngle.y, speech.pitchAngle.x, 0.0f);
+            tweak.pitchAngle = new Vector3f(speech.pitchAngle.y, -speech.pitchAngle.x, 0.0f);
             tweak.targetBox =
                 new Vector4f(speech.targetBox.sub(speech.position, new Vector3f()).mul(WORLD_SCALE), 0.0f);
             tweak.targetBox.z = 0.0f;
@@ -1253,7 +1445,7 @@ public class PartConverter
 
         PCameraTweak tweak = thing.getPart(Part.CAMERA_TWEAK);
 
-        tweak.pitchAngle = new Vector3f(camera.pitchAngle.y, camera.pitchAngle.x, 0.0f);
+        tweak.pitchAngle = new Vector3f(camera.pitchAngle.y, -camera.pitchAngle.x, 0.0f);
         tweak.targetBox =
             new Vector4f(camera.targetPosition.sub(camera.position, new Vector3f()).mul(WORLD_SCALE), 0.0f);
         tweak.targetBox.z = 0.0f;
@@ -1262,11 +1454,11 @@ public class PartConverter
         tweak.triggerBox = new Vector4f(
             triggerPosition.x,
             triggerPosition.y,
-            camera.triggerBox.x * WORLD_SCALE,
-            camera.triggerBox.y * WORLD_SCALE
+            camera.triggerBox.x * (WORLD_SCALE / 2.0f),
+            camera.triggerBox.y * (WORLD_SCALE / 2.0f)
         );
 
-        tweak.zoomDistance = camera.zoomDistance * WORLD_SCALE;
+        tweak.zoomDistance = camera.zoomDistance * WORLD_SCALE * 0.75f;
         tweak.positionFactor = 1.0f - camera.trackPlayer;
 
         context.lookup.put(camera.uid, thing);
@@ -1476,8 +1668,6 @@ public class PartConverter
             part.animationPause = piston.pause * 30.0f;
             part.animationPhase = piston.sync * 30.0f;
             part.stiff = piston.stiff;
-            
-            part.angle = offsetAngle;
 
             part.strength =
                 (float) Math.pow(((-1.750184 / (piston.strength + 0.1750153) + 10.00018) / 10.0f), 3.0);
@@ -1496,7 +1686,7 @@ public class PartConverter
             fVar2 = (float) Math.log(fVar5);
 
 
-            part.strength = (float) Math.pow((fVar1 / fVar2), 3.0);
+            part.strength = (float) Math.pow(((fVar1 / 12.0f)/ fVar2), 3.0);
 
             part.length = 0.0f;
         }
@@ -1562,7 +1752,7 @@ public class PartConverter
 
             part.angle = bolt.angle + offsetAngle;
 
-            part.strength = (float) Math.pow(strength, 3.0);
+            part.strength = (float) Math.pow(strength / 12.0f, 3.0);
             part.length = 0.0f;
             part.animationRange = bolt.angle + offsetAngle;
         }
@@ -1573,6 +1763,8 @@ public class PartConverter
             Vector4f bContactPoint = new Vector4f(part.bContact, 1.0f).mul(bWorldPos);
             Vector4f slideDir4 = bContactPoint.sub(aContactPoint).normalize().mul(aWorldPos.invert(new Matrix4f()));
             part.slideDir = new Vector3f(slideDir4.x, slideDir4.y, slideDir4.z);
+            
+            part.angle = offsetAngle;
         }
 
         context.lookup.put(joint.uid, thing);

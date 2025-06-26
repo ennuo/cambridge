@@ -4,12 +4,14 @@ import cambridge.io.Serializable;
 import cambridge.io.streams.MemoryInputStream;
 import cambridge.structures.data.UID;
 
-public class Button implements Serializable
+public class LeverSwitch implements Serializable
 {
     public int behavior;
     public boolean inverted;
     public UID uid;
-    public UID baseUid;
+    public UID baseuid2;
+    public UID handleUid;
+    public UID baseuid4;
     public float activation;
     public UID[] targets;
 
@@ -31,9 +33,9 @@ public class Button implements Serializable
             this.targets[i] = stream.uid();
         stream.bytes((0x64 - targetCount) * 0x4);
 
-        this.baseUid = stream.uid(); // switch base object uid
-        stream.uid(); // button object uid
-        stream.uid(); // myob reference
+        this.baseuid2 = stream.uid(); // switch base object uid
+        this.handleUid = stream.uid(); // handle uid
+        this.baseuid4 = stream.uid(); // switch base object uid
         stream.i32(); // unknown
     }
 }

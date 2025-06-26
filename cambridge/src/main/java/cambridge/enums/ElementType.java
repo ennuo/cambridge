@@ -49,6 +49,8 @@ public enum ElementType
     FINISH_GATE("FNGT"),
     
     BUTTON("BUTN", Button.class),
+    BINARY_SWITCH("2WS ", LeverSwitch.class),
+    TRINARY_SWITCH("3WS ", LeverSwitch.class),
 
     MAGNETIC_KEY("MAGK", MagneticKey.class),
 
