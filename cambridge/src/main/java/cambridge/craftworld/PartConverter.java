@@ -935,15 +935,18 @@ public class PartConverter
 
         Vector3f translation = brain.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
 
-        PPos pos = brainThing.getPart(Part.POS);
-        Matrix4f wpos = pos.worldPosition;
+        PPos brainPos = brainThing.getPart(Part.POS);
+        Matrix4f wpos = brainPos.worldPosition;
         brainThing.<PShape>getPart(Part.SHAPE).thickness = 90.0f;
         translation.z -= brainThing.<PShape>getPart(Part.SHAPE).thickness - 10.0f;
         wpos.setTranslation(translation);
         wpos.rotateY(-brain.angle);
 
-        pos.worldPosition = wpos;
-        pos.localPosition = wpos;
+        brainPos.worldPosition = wpos;
+        brainPos.localPosition = wpos;
+        
+        PPos resourcePos = resourceThing.getPart(Part.POS);
+        resourcePos.worldPosition = wpos.mul(resourcePos.localPosition, new Matrix4f());
 
         PCreature creature = brainThing.<PCreature>getPart(Part.CREATURE);
         
@@ -955,21 +958,11 @@ public class PartConverter
         creature.jumpIntervalPhase = (int) (brain.jump_phase * 30.0f);
         creature.jumpModifier = brain.jump_modifier;
 
-        /*
-        brainThing.setPart(Part.GROUP, new PGroup());
-        resourceThing.groupHead = brainThing;
-        resourceThing.parent = brainThing;
-        brainThing.<PCreature>getPart(Part.CREATURE).resourceThing = resourceThing;
-        */
         context.lookup.put(brain.uid, brainThing);
         context.things.add(brainThing);
         context.things.add(resourceThing);
         
-        PPos resource_pos = resourceThing.getPart(Part.POS);
-        Vector3f resource_translation = resource_pos.localPosition.getTranslation(new Vector3f());
-        resource_pos.worldPosition = wpos.translate(resource_translation);
-        resourceThing.setPart(Part.TRIGGER, new PTrigger(TriggerType.RADIUS, 1.3f));
-
+        //resourceThing.setPart(Part.TRIGGER, new PTrigger(TriggerType.RADIUS, 1.3f));
 
         return brainThing;
     }
@@ -985,6 +978,7 @@ public class PartConverter
         Vector3f translation = piece.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
 
         PPos pos = pieceThing.getPart(Part.POS);
+        context.things.add(pieceThing);
         Matrix4f wpos = pos.worldPosition;
         pieceThing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
         translation.z -= pieceThing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
@@ -993,40 +987,18 @@ public class PartConverter
 
         pos.worldPosition = wpos;
         pos.localPosition = wpos;
-
-        context.lookup.put(piece.uid, pieceThing);
-        context.things.add(pieceThing);
         
-        PPos anim_pos = animThing.getPart(Part.POS);
-        Matrix4f anim_wpos = anim_pos.worldPosition;
-
-        anim_pos.worldPosition = wpos;
-        anim_pos.localPosition = wpos;
+        PPos animPos = animThing.getPart(Part.POS);
+        context.things.add(animThing);
+        animPos.worldPosition = wpos.mul(animPos.localPosition, new Matrix4f());
         
         pieceThing.setPart(Part.GROUP, new PGroup());
         animThing.groupHead = pieceThing;
         animThing.parent = pieceThing;
         pieceThing.<PEnemy>getPart(Part.ENEMY).animThing = animThing;
+
+        context.lookup.put(piece.uid, pieceThing);
         
-        context.things.add(animThing);
-
-        /*
-        PEnemy enemy = thing.getPart(Part.ENEMY);
-        Thing anim_thing = enemy.animThing;
-
-        PPos anim_pos = anim_thing.getPart(Part.POS);
-        Matrix4f anim_wpos = anim_pos.worldPosition;
-        anim_wpos.setTranslation(translation);
-        
-        anim_pos.worldPosition = anim_wpos;
-        anim_pos.localPosition = anim_wpos;
-        
-        UID anim_uid = piece.uid.getHash();
-
-        context.lookup.put(anim_uid, anim_thing);
-        context.things.add(anim_thing);
-        */
-
         return pieceThing;
     }
 
@@ -1660,6 +1632,8 @@ public class PartConverter
         if (switchPlacementBody == null) return null;
 
         Matrix4f dWorldPos = switchPlacementBody.<PPos>getPart(Part.POS).worldPosition;
+        // Offset to account for model
+        dWorldPos.translate(new Vector3f (0.0f, 7.837891f, 0.0f));
         Vector4f dTranslation = dWorldPos.getColumn(3, new Vector4f());
 
         context.deleteThingAndChildren(switchPlacementBody);
@@ -1734,42 +1708,55 @@ public class PartConverter
         Thing handleThing = things[2];
         Thing jointThing = things[3];
 
-        Thing rootSwitch = context.lookup.get(lever.myobjectUid);
-        if (rootSwitch == null) return null;
-        
-        PPos pos = rootSwitch.getPart(Part.POS);
-        Matrix4f wpos = pos.worldPosition;
-        wpos.translate(new Vector3f (-3.697876f, 7.501953f, 0.0f));
-        
+        Thing switchPlacementBody = context.lookup.get(lever.myobjectUid);
+        if (switchPlacementBody == null) return null;
+
+        Matrix4f dWorldPos = switchPlacementBody.<PPos>getPart(Part.POS).worldPosition;
+        // Offset to account for model
+        dWorldPos.translate(new Vector3f (-3.697876f, 7.501953f, 0.0f));
+        Vector4f dTranslation = dWorldPos.getColumn(3, new Vector4f());
+
+        context.deleteThingAndChildren(switchPlacementBody);
+
         PPos basePos = baseThing.getPart(Part.POS);
         PPos leverPos = leverThing.getPart(Part.POS);
-        PPos handlePos = handleThing.getPart(Part.POS);
-
-        basePos.worldPosition = wpos;
-        basePos.localPosition = wpos;
-        leverPos.worldPosition = leverPos.localPosition.mul(wpos);
-        leverPos.localPosition = leverPos.localPosition.mul(wpos);
-        handlePos.worldPosition = handlePos.localPosition.mul(wpos);
-        handlePos.localPosition = handlePos.localPosition.mul(wpos);
+        Vector3f leverOffset = leverPos.worldPosition.getTranslation(new Vector3f())
+                                .sub(basePos.worldPosition.getTranslation(new Vector3f()))
+                                .rotate(leverPos.worldPosition.getNormalizedRotation(new Quaternionf()).invert(), new Vector3f());
         
+        context.things.add(baseThing);
+        basePos.worldPosition.mul(dWorldPos);
+        basePos.worldPosition.setColumn(3, dTranslation);
+        basePos.localPosition = new Matrix4f(basePos.worldPosition);
+        
+        context.things.add(leverThing);
+        leverPos.worldPosition = basePos.worldPosition.mul(leverPos.worldPosition, new Matrix4f()); 
+        leverPos.worldPosition.setColumn(3, dTranslation);
+        leverPos.worldPosition.translate(leverOffset);
+        leverPos.localPosition = new Matrix4f(leverPos.worldPosition);
+
+        PPos handlePos = handleThing.getPart(Part.POS);
+        context.things.add(handleThing);
+        PPos handleParent = handleThing.parent.getPart(Part.POS);
+        handlePos.worldPosition = handleParent.worldPosition.mul(handlePos.localPosition, new Matrix4f());
+
+        context.things.add(jointThing);
+
         PSwitch part = baseThing.getPart(Part.SWITCH);
         part.inverted = lever.inverted;
         switch (lever.behavior)
         {
             case 0:
-                part.behavior = SwitchBehavior.OFF_ON;
+                part.behaviorOld = 0;
                 break;
             case 1:
-                part.behavior = SwitchBehavior.DIRECTION;
+                part.behaviorOld = 2;
                 break;
             case 2:
-                part.behavior = SwitchBehavior.ONE_SHOT;
-                break;
-            case 3:
-                part.behavior = SwitchBehavior.SPEED_SCALE;
+                part.behaviorOld = 3;
                 break;
         }
-        
+
         ArrayList<SwitchTarget> targets = new ArrayList<>(lever.targets.length);
         for (int i = 0; i < lever.targets.length; ++i)
         {
@@ -1790,16 +1777,10 @@ public class PartConverter
         }
         part.outputs[0].targetList = targets;
         part.outputs[0].activation.activation = 0.0f;
-
-        context.deleteThingAndChildren(rootSwitch);
-
+        
         context.lookup.put(lever.myobjectUid, baseThing);
-        context.things.add(baseThing);
-        context.lookup.put(lever.baseUid, handleThing);
-        context.things.add(handleThing);
-        context.things.add(leverThing);
-        context.things.add(jointThing);
-
+        context.lookup.put(lever.handleUid, handleThing);
+        
         return baseThing;
     }
 
