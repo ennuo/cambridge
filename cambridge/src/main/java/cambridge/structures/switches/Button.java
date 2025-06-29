@@ -10,6 +10,8 @@ public class Button implements Serializable
     public boolean inverted;
     public UID uid;
     public UID baseUid;
+    public UID objectUid;
+    public UID myobjectUid;
     public float activation;
     public UID[] targets;
 
@@ -32,8 +34,8 @@ public class Button implements Serializable
         stream.bytes((0x64 - targetCount) * 0x4);
 
         this.baseUid = stream.uid(); // switch base object uid
-        stream.uid(); // button object uid
-        stream.uid(); // myob reference
+        this.objectUid = stream.uid(); // button object uid
+        this.myobjectUid = stream.uid(); // myob reference
         stream.i32(); // unknown
     }
 }

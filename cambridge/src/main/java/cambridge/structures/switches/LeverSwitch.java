@@ -9,9 +9,9 @@ public class LeverSwitch implements Serializable
     public int behavior;
     public boolean inverted;
     public UID uid;
-    public UID baseuid2;
+    public UID baseUid;
     public UID handleUid;
-    public UID baseuid4;
+    public UID myobjectUid;
     public float activation;
     public UID[] targets;
 
@@ -33,9 +33,9 @@ public class LeverSwitch implements Serializable
             this.targets[i] = stream.uid();
         stream.bytes((0x64 - targetCount) * 0x4);
 
-        this.baseuid2 = stream.uid(); // switch base object uid
+        this.baseUid = stream.uid(); // switch base object uid
         this.handleUid = stream.uid(); // handle uid
-        this.baseuid4 = stream.uid(); // switch base object uid
+        this.myobjectUid = stream.uid(); // my object uid
         stream.i32(); // unknown
     }
 }

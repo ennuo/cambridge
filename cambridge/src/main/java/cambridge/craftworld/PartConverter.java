@@ -32,6 +32,7 @@ import cwlib.structs.things.parts.*;
 import cwlib.types.data.GUID;
 import cwlib.types.data.ResourceDescriptor;
 
+import org.joml.AxisAngle4f;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -120,30 +121,22 @@ public class PartConverter
         return (float) front - shape.thickness;
     }
 
-    public static LethalType getGasColor(ResourceDescriptor gmat)
+    public static LethalType getGasColor(int uid)
     {
-        LethalType lethality = LethalType.GAS;
-        if(gmat.getGUID().equals(new GUID(10805)))
-        {
-            lethality = LethalType.GAS2;
+        switch (uid) {
+            case -2127386813:
+                return LethalType.GAS2;
+            case -614607477:
+                return LethalType.GAS3;
+            case -537768633:
+                return LethalType.GAS4;
+            case -476798139:
+                return LethalType.GAS5;
+            case 1143064035:
+                return LethalType.GAS6;
+            default: //-1921913909
+                return LethalType.GAS;
         }
-        if(gmat.getGUID().equals(new GUID(44711)))
-        {
-            lethality = LethalType.GAS3;
-        }
-        if(gmat.getGUID().equals(new GUID(44712)))
-        {
-            lethality = LethalType.GAS4;
-        }
-        if(gmat.getGUID().equals(new GUID(44702)))
-        {
-            lethality = LethalType.GAS5;
-        }
-        if(gmat.getGUID().equals(new GUID(44703)))
-        {
-            lethality = LethalType.GAS6;
-        }
-        return lethality;
     }
     
     public static Thing addLandscape(LoadContext context, LandChunkEntity landscape)
@@ -419,164 +412,9 @@ public class PartConverter
 
     // public static HashMap<String, ArrayList<Vector3f>> modelOffsetPaths = new HashMap<>();
 
-    public static Thing addButtonSwitch(LoadContext context, Button button)
-    {
-        Thing[] things = context.loader.getGameAsset(context, PS3Asset.BUTTON);
-        Thing baseThing = things[0];
-        Thing boneThing = things[1];
-        Thing buttonThing = things[2];
-        //Vector3f translation = button.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
-
-        //System.out.println(button.uid);
-        //System.out.println(button.behavior);
-        //System.out.println(button.inverted);
-        //System.out.println(button.activation);
-        //System.out.println(button.baseUid);
-        Thing rootSwitch = context.lookup.get(button.baseUid);
-        context.things.add(rootSwitch);
-        //if(rootSwitch.UID == null) { return null; }
-        
-        PPos pos = rootSwitch.getPart(Part.POS);
-        Matrix4f wpos = pos.worldPosition;
-        rootSwitch.<PShape>getPart(Part.SHAPE).thickness = 90.0f;
-        
-        PPos basePos = pos;
-        PPos bonePos = boneThing.getPart(Part.POS);
-        PPos buttonPos = buttonThing.getPart(Part.POS);
-        //translation.z -= baseThing.<PShape>getPart(Part.SHAPE).thickness;
-        //wpos.setTranslation(translation);
-
-        basePos.worldPosition = wpos;
-        basePos.localPosition = wpos;
-        
-        baseThing.setPart(Part.GROUP, new PGroup());
-        boneThing.groupHead = baseThing;
-        boneThing.parent = baseThing;
-        bonePos.thingOfWhichIAmABone = baseThing;
-        buttonThing.groupHead = baseThing;
-        buttonThing.parent = baseThing;
-
-        bonePos.worldPosition = wpos;
-        bonePos.worldPosition.set(bonePos.localPosition);
-        buttonPos.worldPosition = wpos;
-        buttonPos.worldPosition.mul(buttonPos.localPosition);
-
-        /*
-        PSwitch part = baseThing.getPart(Part.SWITCH);
-
-        ArrayList<SwitchTarget> targets = new ArrayList<>(lever.targets.length);
-        for (int i = 0; i < lever.targets.length; ++i)
-        {
-            Thing target = context.lookup.get(lever.targets[i]);
-            if (target == null)
-            {
-                //System.out.println("[AddSwitches] Couldn't find switch target in list!");
-                continue;
-            }
-            if (target.hasPart(Part.SCRIPT))
-            {
-                PScript script = target.getPart(Part.SCRIPT);
-                ScriptInstance instance = script.instance;
-                if (new GUID(18420).equals(instance.script.getGUID()))
-                    instance.memberData.put("TriggerThing", baseThing);
-            }
-            targets.add(new SwitchTarget(target));
-        }
-        part.outputs[0].targetList = targets;
-        part.outputs[0].activation.activation = 0.0f;
-
-        baseThing.<PSwitch>getPart(Part.SWITCH).referenceThing = leverThing;
-        
-        PPos basePos = rootSwitch.getPart(Part.POS);
-        PPos bonePos = handleThing.getPart(Part.POS);
-        PPos leverPos = leverThing.getPart(Part.POS);
-        Matrix4f wpos = basePos.worldPosition;
-        //translation.z -= baseThing.<PShape>getPart(Part.SHAPE).thickness;
-        */
-
-        Thing buttonGroupThing = context.getEmptyThing();
-        buttonGroupThing.setPart(Part.GROUP, new PGroup());
-        context.things.add(buttonGroupThing);
-
-        baseThing.groupHead = buttonGroupThing;
-        baseThing.groupHead = buttonGroupThing;
-
-        context.lookup.put(button.baseUid, baseThing);
-        context.things.add(baseThing);
-        context.things.add(boneThing);
-        context.things.add(buttonThing);
-
-        return baseThing;
-    }
-    
-    public static Thing addLeverSwitch(LoadContext context, LeverSwitch lever, int type)
-    { 
-        PS3Asset assetType = PS3Asset.BINARY_SWITCH;
-        if(type == 1) { assetType = PS3Asset.TRINARY_SWITCH; }
-
-        Thing[] things = context.loader.getGameAsset(context, assetType);
-        Thing baseThing = things[0];
-        Thing leverThing = things[1];
-        Thing handleThing = things[2];
-        Thing jointThing = things[3];
-
-        /*
-        System.out.println(lever.uid);
-        System.out.println(lever.behavior);
-        System.out.println(lever.inverted);
-        System.out.println(lever.activation);
-        System.out.println(lever.baseuid2);
-        System.out.println(lever.handleUid);
-        System.out.println(lever.baseuid4);
-        */
-
-        /*
-        PSwitch part = baseThing.getPart(Part.SWITCH);
-
-        ArrayList<SwitchTarget> targets = new ArrayList<>(lever.targets.length);
-        for (int i = 0; i < lever.targets.length; ++i)
-        {
-            Thing target = context.lookup.get(lever.targets[i]);
-            if (target == null)
-            {
-                //System.out.println("[AddSwitches] Couldn't find switch target in list!");
-                continue;
-            }
-            if (target.hasPart(Part.SCRIPT))
-            {
-                PScript script = target.getPart(Part.SCRIPT);
-                ScriptInstance instance = script.instance;
-                if (new GUID(18420).equals(instance.script.getGUID()))
-                    instance.memberData.put("TriggerThing", baseThing);
-            }
-            targets.add(new SwitchTarget(target));
-        }
-        part.outputs[0].targetList = targets;
-        part.outputs[0].activation.activation = 0.0f;
-
-        baseThing.<PSwitch>getPart(Part.SWITCH).referenceThing = leverThing;
-        
-        PPos basePos = rootSwitch.getPart(Part.POS);
-        PPos bonePos = handleThing.getPart(Part.POS);
-        PPos leverPos = leverThing.getPart(Part.POS);
-        Matrix4f wpos = basePos.worldPosition;
-        //translation.z -= baseThing.<PShape>getPart(Part.SHAPE).thickness;
-        */
-
-        
-        context.lookup.put(lever.baseuid2, baseThing);
-        context.things.add(baseThing);
-        context.lookup.put(lever.handleUid, handleThing);
-        context.things.add(handleThing);
-        context.things.add(leverThing);
-        context.things.add(jointThing);
-
-        return baseThing;
-    }
-
     public static Thing addMesh(LoadContext context, MeshEntity object)
     {
-        if (object.model.toLowerCase().contains("pressure_switch_button")) { return null; }
+        if (object.model.toLowerCase().contains("pressure_switch_button") || object.model.toLowerCase().contains("lever_switch_handle") || object.model.toLowerCase().contains("lever_switch_sprunghandle")) { return null; }
 
         Vector3f com = new Vector3f();
         for (Vector3f vertex : object.mesh.vertices)
@@ -658,12 +496,6 @@ public class PartConverter
 
         thing.setPart(Part.POS, pos);
         thing.setPart(Part.BODY, new PBody());
-        
-        //if (object.model.toLowerCase().contains("pressure_switch") || object.model.toLowerCase().contains("lever_switch"))
-        //{
-        //    context.lookup.put(object.uid, thing);
-        //    return thing;
-        //}
 
         // if (object.mesh.objectType == ObjectType.STATIC)
         //     thing.<PBody>getPart(Part.BODY).frozen = -1;
@@ -1097,7 +929,6 @@ public class PartConverter
         PS3Asset assetType = PS3Asset.CREATURE_BRAIN_UNPROTECTED;
         if(type == 1) { assetType = PS3Asset.CREATURE_BRAIN_PROTECTED; }
 
-        //System.out.println(brain.uid);
         Thing[] things = context.loader.getGameAsset(context, assetType);
         Thing brainThing = things[0];
         Thing resourceThing = things[1];
@@ -1123,16 +954,6 @@ public class PartConverter
         creature.jumpInterval = (int) (brain.jump_interval * 30.0f);
         creature.jumpIntervalPhase = (int) (brain.jump_phase * 30.0f);
         creature.jumpModifier = brain.jump_modifier;
-        
-        /*
-        System.out.println("behavior " + brain.behavior);
-        System.out.println("radius " + brain.radius);
-        System.out.println("vulnerable " + brain.vulnerable);
-        System.out.println("movement_speed " + brain.movement_speed);
-        System.out.println("jump_interval " + brain.jump_interval);
-        System.out.println("jump_phase " + brain.jump_phase);
-        System.out.println("strength " + brain.strength);
-        */
 
         /*
         brainThing.setPart(Part.GROUP, new PGroup());
@@ -1158,7 +979,6 @@ public class PartConverter
         PS3Asset assetType = PS3Asset.CREATURE_WHEEL;
         if(type == 1) { assetType = PS3Asset.CREATURE_LEG; }
 
-        //System.out.println(piece.uid);
         Thing[] things = context.loader.getGameAsset(context, assetType);
         Thing pieceThing = things[0];
         Thing animThing = things[1];
@@ -1337,7 +1157,13 @@ public class PartConverter
     
     public static Thing addMagicEye(LoadContext context, MagicEye eye)
     {
-        Thing thing = context.loader.getGameAsset(context, PS3Asset.MAGIC_EYE)[0];
+        Thing[] things = context.loader.getGameAsset(context, PS3Asset.MAGIC_EYE);
+        Thing thing = things[0];
+        Thing eyeBone1 = things[1];
+        Thing eyeBone2 = things[2];
+        Thing eyeBone3 = things[3];
+        Thing eyeBone4 = things[4];
+
         Vector3f translation = eye.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
 
         PPos pos = thing.getPart(Part.POS);
@@ -1349,6 +1175,10 @@ public class PartConverter
 
         context.lookup.put(eye.uid, thing);
         context.things.add(thing);
+        context.things.add(eyeBone1);
+        context.things.add(eyeBone2);
+        context.things.add(eyeBone3);
+        context.things.add(eyeBone4);
 
         return thing;
     }
@@ -1817,6 +1647,176 @@ public class PartConverter
         }
     }
 
+
+    public static Thing addButtonSwitch(LoadContext context, Button button)
+    {
+        Thing[] things = context.loader.getGameAsset(context, PS3Asset.BUTTON);
+        Thing baseThing = things[0];
+        Thing boneThing = things[1];
+        Thing buttonThing = things[2];
+        
+        Thing rootSwitch = context.lookup.get(button.myobjectUid);
+        if (rootSwitch == null) return null;
+        
+        PPos pos = rootSwitch.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        
+        PPos basePos = baseThing.getPart(Part.POS);
+        PPos bonePos = boneThing.getPart(Part.POS);
+        PPos buttonPos = buttonThing.getPart(Part.POS);
+
+        Vector3f translation = wpos.getTranslation(new Vector3f());
+        //Matrix4f baseWorldPos = basePos.localPosition.translate(translation);
+
+        Matrix4f baseWorldPos = new Matrix4f(wpos).translate(
+            basePos.localPosition.getTranslation(new Vector3f()))
+            .rotate(basePos.worldPosition.getRotation(new AxisAngle4f()))
+            .scale(basePos.worldPosition.getScale(new Vector3f()));
+        Matrix4f boneWorldPos = new Matrix4f(baseWorldPos).translate(
+            bonePos.localPosition.getTranslation(new Vector3f()))
+            .rotate(bonePos.worldPosition.getRotation(new AxisAngle4f()))
+            .scale(bonePos.worldPosition.getScale(new Vector3f()));
+        Matrix4f buttonWorldPos = new Matrix4f(baseWorldPos).translate(
+            buttonPos.worldPosition.getTranslation(new Vector3f()))
+            .rotate(buttonPos.worldPosition.getRotation(new AxisAngle4f()))
+            .scale(buttonPos.worldPosition.getScale(new Vector3f()));
+
+        //Matrix4f screenWorldPos = new Matrix4f(baseWorldPos).translate(0.0f, 390.0f, -270.0f).rotateZ((float)Math.PI).rotateX(-1.570796f).scale(0.18f, 0.18f, 0.18f);
+        //pos.localPosition = screenWorldPos.invert(new Matrix4f()).mul(baseWorldPos);
+
+        basePos.worldPosition = wpos;
+        basePos.localPosition = wpos;
+        bonePos.worldPosition = boneWorldPos;
+        bonePos.localPosition = boneWorldPos.invert(new Matrix4f()).mul(wpos);
+        buttonPos.worldPosition = buttonWorldPos;
+        buttonPos.localPosition = buttonWorldPos.invert(new Matrix4f()).mul(wpos);
+
+        PSwitch part = baseThing.getPart(Part.SWITCH);
+        part.inverted = button.inverted;
+        switch (button.behavior)
+        {
+            case 0:
+                part.behavior = SwitchBehavior.OFF_ON;
+                break;
+            case 1:
+                part.behavior = SwitchBehavior.DIRECTION;
+                break;
+            case 2:
+                part.behavior = SwitchBehavior.ONE_SHOT;
+                break;
+        }
+
+        ArrayList<SwitchTarget> targets = new ArrayList<>(button.targets.length);
+        for (int i = 0; i < button.targets.length; ++i)
+        {
+            Thing target = context.lookup.get(button.targets[i]);
+            if (target == null)
+            {
+                //System.out.println("[AddSwitches] Couldn't find switch target in list!");
+                continue;
+            }
+            if (target.hasPart(Part.SCRIPT))
+            {
+                PScript script = target.getPart(Part.SCRIPT);
+                ScriptInstance instance = script.instance;
+                if (new GUID(18420).equals(instance.script.getGUID()))
+                    instance.memberData.put("TriggerThing", baseThing);
+            }
+            targets.add(new SwitchTarget(target));
+        }
+        part.outputs[0].targetList = targets;
+        part.outputs[0].activation.activation = 0.0f;
+
+        context.deleteThingAndChildren(rootSwitch);
+        
+        context.lookup.put(button.myobjectUid, baseThing);
+        context.things.add(baseThing);
+        context.things.add(boneThing);
+        context.things.add(buttonThing);
+        
+        return baseThing;
+    }
+    
+    public static Thing addLeverSwitch(LoadContext context, LeverSwitch lever, int type)
+    { 
+        PS3Asset assetType = PS3Asset.BINARY_SWITCH;
+        if(type == 1) { assetType = PS3Asset.TRINARY_SWITCH; }
+
+        Thing[] things = context.loader.getGameAsset(context, assetType);
+        Thing baseThing = things[0];
+        Thing leverThing = things[1];
+        Thing handleThing = things[2];
+        Thing jointThing = things[3];
+
+        Thing rootSwitch = context.lookup.get(lever.myobjectUid);
+        if (rootSwitch == null) return null;
+        
+        PPos pos = rootSwitch.getPart(Part.POS);
+        Matrix4f wpos = pos.worldPosition;
+        wpos.translate(new Vector3f (-3.697876f, 7.501953f, 0.0f));
+        
+        PPos basePos = baseThing.getPart(Part.POS);
+        PPos leverPos = leverThing.getPart(Part.POS);
+        PPos handlePos = handleThing.getPart(Part.POS);
+
+        basePos.worldPosition = wpos;
+        basePos.localPosition = wpos;
+        leverPos.worldPosition = leverPos.localPosition.mul(wpos);
+        leverPos.localPosition = leverPos.localPosition.mul(wpos);
+        handlePos.worldPosition = handlePos.localPosition.mul(wpos);
+        handlePos.localPosition = handlePos.localPosition.mul(wpos);
+        
+        PSwitch part = baseThing.getPart(Part.SWITCH);
+        part.inverted = lever.inverted;
+        switch (lever.behavior)
+        {
+            case 0:
+                part.behavior = SwitchBehavior.OFF_ON;
+                break;
+            case 1:
+                part.behavior = SwitchBehavior.DIRECTION;
+                break;
+            case 2:
+                part.behavior = SwitchBehavior.ONE_SHOT;
+                break;
+            case 3:
+                part.behavior = SwitchBehavior.SPEED_SCALE;
+                break;
+        }
+        
+        ArrayList<SwitchTarget> targets = new ArrayList<>(lever.targets.length);
+        for (int i = 0; i < lever.targets.length; ++i)
+        {
+            Thing target = context.lookup.get(lever.targets[i]);
+            if (target == null)
+            {
+                //System.out.println("[AddSwitches] Couldn't find switch target in list!");
+                continue;
+            }
+            if (target.hasPart(Part.SCRIPT))
+            {
+                PScript script = target.getPart(Part.SCRIPT);
+                ScriptInstance instance = script.instance;
+                if (new GUID(18420).equals(instance.script.getGUID()))
+                    instance.memberData.put("TriggerThing", baseThing);
+            }
+            targets.add(new SwitchTarget(target));
+        }
+        part.outputs[0].targetList = targets;
+        part.outputs[0].activation.activation = 0.0f;
+
+        context.deleteThingAndChildren(rootSwitch);
+
+        context.lookup.put(lever.myobjectUid, baseThing);
+        context.things.add(baseThing);
+        context.lookup.put(lever.baseUid, handleThing);
+        context.things.add(handleThing);
+        context.things.add(leverThing);
+        context.things.add(jointThing);
+
+        return baseThing;
+    }
+
     public static void attachSwitchTargets(LoadContext context)
     {
         for (Element element : context.elements)
@@ -1989,6 +1989,11 @@ public class PartConverter
         part.maxEmittedAtOnce = emitter.maxEmittedAtOnce;
         part.phase = Math.round(emitter.sync * 30.0f);
         part.hideInPlayMode = (emitter.visibility != 0);
+
+        if(thing.groupHead == null)
+        {
+            thing.setPart(Part.BODY, null);
+        }
         
         context.lookup.put(emitter.uid, thing);
         context.things.add(thing);
