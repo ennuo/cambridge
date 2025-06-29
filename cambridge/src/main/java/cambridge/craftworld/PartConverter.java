@@ -229,7 +229,7 @@ public class PartConverter
                 lethality = LethalType.FIRE;
                 break;
             case GAS:
-                lethality = getGasColor(material.renderMaterial);
+                lethality = getGasColor(landscape.mesh.materialUID);
                 break;
             case SPIKE:
                 lethality = LethalType.SPIKE;
@@ -1651,58 +1651,48 @@ public class PartConverter
     public static Thing addButtonSwitch(LoadContext context, Button button)
     {
         Thing[] things = context.loader.getGameAsset(context, PS3Asset.BUTTON);
+        
         Thing baseThing = things[0];
         Thing boneThing = things[1];
         Thing buttonThing = things[2];
         
-        Thing rootSwitch = context.lookup.get(button.myobjectUid);
-        if (rootSwitch == null) return null;
-        
-        PPos pos = rootSwitch.getPart(Part.POS);
-        Matrix4f wpos = pos.worldPosition;
-        
-        PPos basePos = baseThing.getPart(Part.POS);
-        PPos bonePos = boneThing.getPart(Part.POS);
-        PPos buttonPos = buttonThing.getPart(Part.POS);
+        Thing switchPlacementBody = context.lookup.get(button.myobjectUid);
+        if (switchPlacementBody == null) return null;
 
-        Vector3f translation = wpos.getTranslation(new Vector3f());
-        //Matrix4f baseWorldPos = basePos.localPosition.translate(translation);
+        Matrix4f dWorldPos = switchPlacementBody.<PPos>getPart(Part.POS).worldPosition;
+        Vector4f dTranslation = dWorldPos.getColumn(3, new Vector4f());
 
-        Matrix4f baseWorldPos = new Matrix4f(wpos).translate(
-            basePos.localPosition.getTranslation(new Vector3f()))
-            .rotate(basePos.worldPosition.getRotation(new AxisAngle4f()))
-            .scale(basePos.worldPosition.getScale(new Vector3f()));
-        Matrix4f boneWorldPos = new Matrix4f(baseWorldPos).translate(
-            bonePos.localPosition.getTranslation(new Vector3f()))
-            .rotate(bonePos.worldPosition.getRotation(new AxisAngle4f()))
-            .scale(bonePos.worldPosition.getScale(new Vector3f()));
-        Matrix4f buttonWorldPos = new Matrix4f(baseWorldPos).translate(
-            buttonPos.worldPosition.getTranslation(new Vector3f()))
-            .rotate(buttonPos.worldPosition.getRotation(new AxisAngle4f()))
-            .scale(buttonPos.worldPosition.getScale(new Vector3f()));
+        context.deleteThingAndChildren(switchPlacementBody);
 
-        //Matrix4f screenWorldPos = new Matrix4f(baseWorldPos).translate(0.0f, 390.0f, -270.0f).rotateZ((float)Math.PI).rotateX(-1.570796f).scale(0.18f, 0.18f, 0.18f);
-        //pos.localPosition = screenWorldPos.invert(new Matrix4f()).mul(baseWorldPos);
-
-        basePos.worldPosition = wpos;
-        basePos.localPosition = wpos;
-        bonePos.worldPosition = boneWorldPos;
-        bonePos.localPosition = boneWorldPos.invert(new Matrix4f()).mul(wpos);
-        buttonPos.worldPosition = buttonWorldPos;
-        buttonPos.localPosition = buttonWorldPos.invert(new Matrix4f()).mul(wpos);
+        for (Thing thing : things)
+        {
+            PPos pos = thing.getPart(Part.POS);
+            context.things.add(thing);
+            if (thing.parent == null)
+            {
+                pos.worldPosition.mul(dWorldPos);
+                pos.worldPosition.setColumn(3, dTranslation);
+                pos.localPosition = new Matrix4f(pos.worldPosition);
+            }
+            else
+            {
+                PPos parent = thing.parent.getPart(Part.POS);
+                pos.worldPosition = parent.worldPosition.mul(pos.localPosition, new Matrix4f());
+            }
+        }
 
         PSwitch part = baseThing.getPart(Part.SWITCH);
         part.inverted = button.inverted;
         switch (button.behavior)
         {
             case 0:
-                part.behavior = SwitchBehavior.OFF_ON;
+                part.behaviorOld = 0;
                 break;
             case 1:
-                part.behavior = SwitchBehavior.DIRECTION;
+                part.behaviorOld = 2;
                 break;
             case 2:
-                part.behavior = SwitchBehavior.ONE_SHOT;
+                part.behaviorOld = 3;
                 break;
         }
 
@@ -1727,12 +1717,8 @@ public class PartConverter
         part.outputs[0].targetList = targets;
         part.outputs[0].activation.activation = 0.0f;
 
-        context.deleteThingAndChildren(rootSwitch);
         
         context.lookup.put(button.myobjectUid, baseThing);
-        context.things.add(baseThing);
-        context.things.add(boneThing);
-        context.things.add(buttonThing);
         
         return baseThing;
     }
