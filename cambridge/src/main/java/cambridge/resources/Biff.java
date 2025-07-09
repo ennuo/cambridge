@@ -52,6 +52,13 @@ public class Biff
             return element;
         }
 
+        void setOwner(Biff biff)
+        {
+            this.biff = biff;
+            for (var child : children)
+                child.setOwner(biff);
+        }
+
         public ElementType getType()
         {
             return ElementType.get(this.id);
@@ -70,6 +77,11 @@ public class Biff
         public int getOffset()
         {
             return offset;
+        }
+
+        public int getVersion()
+        {
+            return biff.version;
         }
 
         @SuppressWarnings("unchecked")
