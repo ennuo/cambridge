@@ -660,7 +660,7 @@ public class Biffloader
         // First pass to add all objects to collection
         for (Element element : context.elements)
         {
-            Joint.USE_V013 = context.biff.getAll(ElementType.V013).size() != 0;
+            Joint.USE_V013 = context.biff.version >= 13;
             switch (element.getType())
             {
                 case LANDSCAPE:

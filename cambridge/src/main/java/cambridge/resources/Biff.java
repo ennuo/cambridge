@@ -8,12 +8,17 @@ import cambridge.util.FileIO;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 public class Biff
 {
+    private static final Pattern VERSION_REGEX = Pattern.compile("V\\d{3}");
+
     public static class Element
     {
         private transient byte[] source;
+        private transient Biff biff;
+
         public String id;
         private int offset;
         private int size;
@@ -83,6 +88,8 @@ public class Biff
     }
 
     public ArrayList<Element> elements = new ArrayList<>();
+    public int version = 1;
+    public Element versionData;
 
     public Biff(String path)
     {
@@ -125,5 +132,19 @@ public class Biff
 
         int table = Bytes.toIntegerLE(biff, biff.length - 4);
         this.elements = Element.at(biff, table).getChildren();
+
+        for (var element : elements)
+        {
+            var matcher = VERSION_REGEX.matcher(element.id);
+            if (matcher.matches())
+            {
+                versionData = element;
+                version = Integer.parseInt(element.id.substring(1));
+                break;
+            }
+        }
+
+        for (var element : elements)
+            element.setOwner(this);
     }
 }
