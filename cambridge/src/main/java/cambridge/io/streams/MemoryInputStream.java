@@ -28,6 +28,7 @@ public class MemoryInputStream
 
     private int offset = 0;
     private final int length;
+    private int version = 1;
 
     private boolean isLittleEndian = true;
 
@@ -43,6 +44,22 @@ public class MemoryInputStream
         this.buffer = buffer;
         this.length = buffer.length;
     }
+
+    /**
+     * Creates a memory input stream from byte array.
+     *
+     * @param buffer Byte array to use as source
+     * @param version Version of the data source
+     */
+    public MemoryInputStream(byte[] buffer, int version)
+    {
+        if (buffer == null)
+            throw new NullPointerException("Buffer supplied to MemoryInputStream cannot be null!");
+        this.buffer = buffer;
+        this.length = buffer.length;
+        this.version = version;
+    }
+
 
     /**
      * Creates a memory input stream from file at path.
@@ -463,15 +480,26 @@ public class MemoryInputStream
         return this.length;
     }
 
+    public final int getVersion()
+    {
+        return this.version;
+    }
+
     public void setLittleEndian(boolean value)
     {
         this.isLittleEndian = value;
+    }
+
+    public void setVersion(int version)
+    {
+        this.version = version;
     }
 
     public MemoryInputStream at(int offset)
     {
         MemoryInputStream stream = new MemoryInputStream(this.buffer);
         stream.offset = offset;
+        stream.version = version;
         return stream;
     }
 

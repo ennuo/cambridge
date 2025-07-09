@@ -94,7 +94,7 @@ public class Biff
             T structure = null;
             try { structure = clazz.getDeclaredConstructor().newInstance(); }
             catch (Exception ex) { return null; }
-            structure.load(new MemoryInputStream(this.source).at(this.offset), this.size);
+            structure.load(new MemoryInputStream(this.source, getVersion()).at(this.offset), this.size);
             return structure;
         }
     }

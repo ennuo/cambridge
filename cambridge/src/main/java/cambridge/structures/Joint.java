@@ -7,8 +7,6 @@ import org.joml.Vector3f;
 
 public class Joint implements Serializable
 {
-    public static boolean USE_V013 = false;
-
     public UID uid;
     public int visibility;
     public UID a, b;
@@ -39,7 +37,7 @@ public class Joint implements Serializable
         this.b = stream.uid();
         this.contactA = stream.v3();
 
-        if (USE_V013)
+        if (stream.getVersion() >= 13)
         {
             this.contactB = stream.v3();
             if (!isBolt)

@@ -1372,7 +1372,7 @@ public class PartConverter
             // Need to calculate the B contact if we're using an older version,
             // since they didn't store the contact point, or maybe they did and old me
             // never noticed, who knows.
-            if (!Joint.USE_V013)
+            if (context.biff.version < 0x13)
             {
                 Vector3f boltA = aCOM.add(part.aContact, new Vector3f());
                 Vector3f boltB = new Vector3f(
