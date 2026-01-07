@@ -28,12 +28,12 @@ public class RenderMesh implements Serializable
         this.materialUID = stream.i32();
         this.oldMaterialUID = stream.i32();
 
-        v0 = stream.i32();
-        v1 = stream.i32();
+        v0 = stream.i32(); //not an integer
+        v1 = stream.i32(); //consistent integer
 
         this.massDepth = stream.f32();
 
-        v2 = stream.i32();
+        v2 = stream.i32(); //not an integer
 
         int vertexCount = stream.i32();
         MemoryInputStream vertexBuffer = stream.at(stream.getOffset() + stream.i32());

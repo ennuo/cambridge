@@ -5,7 +5,7 @@ import cambridge.structures.data.UID;
 
 public class CreatureBrain extends GameObject
 {
-    public UID uid;
+    public UID referenceUid;
     public int behavior;
     public float radius;
     public int vulnerable;
@@ -25,6 +25,6 @@ public class CreatureBrain extends GameObject
         this.jump_interval = stream.f32();
         this.jump_phase = stream.f32();
         this.jump_modifier = stream.f32();
-        this.uid = stream.uid();
+        this.referenceUid = stream.uid();
     }
 }

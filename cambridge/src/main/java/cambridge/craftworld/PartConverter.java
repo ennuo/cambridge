@@ -167,7 +167,6 @@ public class PartConverter
         Thing thing = context.getEmptyThing();
 
         PShape shape = new PShape(landscape.mesh.vertices);
-        shape.bevelSize = material.bevelSize;
         shape.soundEnumOverride = material.soundEnumOverride;
         shape.COM.setColumn(3, new Vector4f(com, 1.0f));
 
@@ -264,6 +263,11 @@ public class PartConverter
                 thing_mesh.bevel = cardboard_thin;
             }
         }
+
+        PGeneratedMesh thing_mesh = thing.getPart(Part.GENERATED_MESH);
+        thing_mesh.planGUID = material.planGuid;
+        thing.planGUID = material.planGuid;
+        //System.out.println("plan guid: " + material.planGuid);
 
         // if (shape.massDepth == 2.0f) translation.z = -100.0f;
         // else if (shape.massDepth == 1.0f)
@@ -666,31 +670,33 @@ public class PartConverter
     public static Thing addThruster(LoadContext context, Thruster thruster)
     {
         Thing thing = context.loader.getGameAsset(context, PS3Asset.THRUSTER)[0];
-        Vector3f translation = thruster.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
 
+        PPos pos = new PPos();
+        Matrix4f wpos = pos.worldPosition;
+        Vector3f translation = thruster.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+        
+        thing.<PShape>getPart(Part.SHAPE).thickness = 90.0f;
+        translation.z -= 60.0f;
+
+        wpos.setTranslation(translation);
+        // Offset to account for model
+        wpos.translate(new Vector3f (50.0f, 0.0f, 0.0f).rotateZ(thruster.angle + 1.5708f));
+        wpos.rotateZ(thruster.angle + 1.5708f);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        thing.setPart(Part.POS, pos);
         PScript script = thing.getPart(Part.SCRIPT);
         //System.out.println("thruster strength " + thruster.strength);
         //System.out.println("thruster active " + thruster.active);
         script.instance.memberData.put("Strength", Math.min(thruster.strength * 4.0f * (4.0f + (1.0f / 6.0f)), 1.0f));
         script.instance.memberData.put("HasIgnited", thruster.active != 0);
         script.instance.memberData.put("ModScale", (float) thruster.active);
-
-        PPos pos = thing.getPart(Part.POS);
-        Matrix4f wpos = pos.worldPosition;
-        thing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
-        translation.z -= thing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
-        wpos.setTranslation(translation);
-        wpos.rotateZ(thruster.angle + (float) Math.PI);
-
-        // Hacky way of getting thruster offset
-        //Vector3f offset_rotation = new Vector3f(0.0f, 0.0f, 0.0f).rotateZ(thruster.angle + (float) Math.PI, new Vector3f (0.0f, 0.0f, 0.0f));
-        //wpos.translate(offset_rotation);
-
-        pos.worldPosition = wpos;
-        pos.localPosition = wpos;
-
-        context.lookup.put(thruster.uid, thing);
+        
         context.things.add(thing);
+        
+        context.lookup.put(thruster.uid, thing);
 
         return thing;
     }
@@ -929,24 +935,38 @@ public class PartConverter
         PS3Asset assetType = PS3Asset.CREATURE_BRAIN_UNPROTECTED;
         if(type == 1) { assetType = PS3Asset.CREATURE_BRAIN_PROTECTED; }
 
+        Thing triggerThing = null;
         Thing[] things = context.loader.getGameAsset(context, assetType);
         Thing brainThing = things[0];
         Thing resourceThing = things[1];
+        // Only add if unprotected
+        if(type == 0) { triggerThing = things[2]; }
 
+        PPos pos = new PPos();
+        Matrix4f wpos = pos.worldPosition;
         Vector3f translation = brain.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
-
-        PPos brainPos = brainThing.getPart(Part.POS);
-        Matrix4f wpos = brainPos.worldPosition;
+        
         brainThing.<PShape>getPart(Part.SHAPE).thickness = 90.0f;
-        translation.z -= brainThing.<PShape>getPart(Part.SHAPE).thickness - 10.0f;
-        wpos.setTranslation(translation);
-        wpos.rotateY(-brain.angle);
+        translation.z += 40.0f;
 
-        brainPos.worldPosition = wpos;
-        brainPos.localPosition = wpos;
+        wpos.setTranslation(translation);
+        // Offset to account for model
+        //wpos.translate(new Vector3f (0.0f, 20.0f, 0.0f).rotateZ(brain.angle));
+        wpos.rotateZ(brain.angle);
+        wpos.rotateX(-1.5708f);
+
+        pos.worldPosition = wpos;
+        pos.localPosition = wpos;
+
+        brainThing.setPart(Part.POS, pos);
         
         PPos resourcePos = resourceThing.getPart(Part.POS);
         resourcePos.worldPosition = wpos.mul(resourcePos.localPosition, new Matrix4f());
+        // Only set if unprotected
+        if(type == 0) { 
+            PPos triggerPos = triggerThing.getPart(Part.POS);
+            triggerPos.worldPosition = wpos.mul(triggerPos.localPosition, new Matrix4f());
+        }
 
         PCreature creature = brainThing.<PCreature>getPart(Part.CREATURE);
         
@@ -961,8 +981,10 @@ public class PartConverter
         context.lookup.put(brain.uid, brainThing);
         context.things.add(brainThing);
         context.things.add(resourceThing);
-        
-        //resourceThing.setPart(Part.TRIGGER, new PTrigger(TriggerType.RADIUS, 1.3f));
+        // Only add if unprotected
+        if(type == 0) { context.things.add(triggerThing); }
+
+        resourceThing.setPart(Part.TRIGGER, new PTrigger(TriggerType.RADIUS, 1.3f));
 
         return brainThing;
     }
@@ -972,32 +994,56 @@ public class PartConverter
         PS3Asset assetType = PS3Asset.CREATURE_WHEEL;
         if(type == 1) { assetType = PS3Asset.CREATURE_LEG; }
 
+        Thing animThing2 = null;
         Thing[] things = context.loader.getGameAsset(context, assetType);
         Thing pieceThing = things[0];
-        Thing animThing = things[1];
-        Vector3f translation = piece.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+        Thing animThing1 = things[1];
+        // Only add if leg
+        if(type == 1) { animThing2 = things[2]; }
 
-        PPos pos = pieceThing.getPart(Part.POS);
-        context.things.add(pieceThing);
+        PPos pos = new PPos();
         Matrix4f wpos = pos.worldPosition;
+        Vector3f translation = piece.position.mul(WORLD_SCALE, new Vector3f()).add(WORLD_OFFSET);
+        
         pieceThing.<PShape>getPart(Part.SHAPE).thickness = 70.0f;
-        translation.z -= pieceThing.<PShape>getPart(Part.SHAPE).thickness + 10.0f;
+        translation.z += 40.0f;
+
+        wpos.scale(new Vector3f(0.6f, 0.6f, 1.0f));
+
         wpos.setTranslation(translation);
+        // Offset to account for model
+        wpos.translate(new Vector3f (0.0f, 20.0f, 0.0f).rotateZ(piece.angle));
         wpos.rotateZ(piece.angle);
+        //wpos.rotateX(-1.5708f);
 
         pos.worldPosition = wpos;
         pos.localPosition = wpos;
+
+        pieceThing.setPart(Part.POS, pos);
         
-        PPos animPos = animThing.getPart(Part.POS);
-        context.things.add(animThing);
-        animPos.worldPosition = wpos.mul(animPos.localPosition, new Matrix4f());
-        
+        PPos anim1Pos = animThing1.getPart(Part.POS);
+        anim1Pos.worldPosition = wpos.mul(anim1Pos.localPosition, new Matrix4f());
+        // Only set if leg
+        if(type == 1) { 
+            PPos anim2Pos = animThing2.getPart(Part.POS);
+            anim2Pos.worldPosition = wpos.mul(anim2Pos.localPosition, new Matrix4f());
+        }
+
         pieceThing.setPart(Part.GROUP, new PGroup());
-        animThing.groupHead = pieceThing;
-        animThing.parent = pieceThing;
-        pieceThing.<PEnemy>getPart(Part.ENEMY).animThing = animThing;
+        animThing1.groupHead = pieceThing;
+        animThing1.parent = pieceThing;
+        if(type == 0) { pieceThing.<PEnemy>getPart(Part.ENEMY).animThing = animThing1; }
+        else {
+            animThing2.groupHead = pieceThing;
+            animThing2.parent = pieceThing;
+            pieceThing.<PEnemy>getPart(Part.ENEMY).animThing = animThing2; 
+        }
 
         context.lookup.put(piece.uid, pieceThing);
+        context.things.add(pieceThing);
+        context.things.add(animThing1);
+        // Only add if leg
+        if(type == 1) { context.things.add(animThing2); }
         
         return pieceThing;
     }
@@ -1581,6 +1627,8 @@ public class PartConverter
             if (glue.objects.length == 0) continue;
 
             Thing root = context.lookup.get(glue.objects[0]);
+            //System.out.println("length: " + glue.objects.length);
+            //System.out.println("glue object root: " + glue.objects[0]);
             if (root == null)
             {
                 //System.out.printf("[AddGlue] Could not find root object \"%s\" in element list!%n", glue.objects[0]);
@@ -1595,6 +1643,7 @@ public class PartConverter
             for (int i = 1; i < glue.objects.length; ++i)
             {
                 Thing child = context.lookup.get(glue.objects[i]);
+                //System.out.println("glue object: " + glue.objects[i]);
 
                 if (child == null)
                 {

@@ -460,25 +460,25 @@ public class Biffloader
                 switch (category)
                 {
                     case "Cardboard":
-                        physicsMaterialKey = 66927; staticPhysicsMaterialKey = 2790593263l; break;
+                        physicsMaterialKey = 66927; staticPhysicsMaterialKey = 11987; break;
                     case "Metal": 
-                        physicsMaterialKey = 10716; staticPhysicsMaterialKey = 4226309871l;  break;
+                        physicsMaterialKey = 10716; staticPhysicsMaterialKey = 11987;  break;
                     case "Sponge":
-                        physicsMaterialKey = 10719; staticPhysicsMaterialKey = 3479689174l;  break;
+                        physicsMaterialKey = 10719; staticPhysicsMaterialKey = 45941;  break;
                     case "Stone":
-                        physicsMaterialKey = 26602; staticPhysicsMaterialKey = 3060067881l;  break;
+                        physicsMaterialKey = 26602; staticPhysicsMaterialKey = 11987;  break;
                     case "Wood":
-                        physicsMaterialKey = 10717; staticPhysicsMaterialKey = 3643538752l;  break;
+                        physicsMaterialKey = 10717; staticPhysicsMaterialKey = 11987;  break;
                     case "Polystyrene": 
-                        physicsMaterialKey = 10718; staticPhysicsMaterialKey = 3962255420l;  break;
+                        physicsMaterialKey = 10718; staticPhysicsMaterialKey = 45941;  break;
                     case "Glass":
                         physicsMaterialKey = 10725; staticPhysicsMaterialKey = 3905019888l;  break;
                     case "PeachBubble":
-                        physicsMaterialKey = 21165; staticPhysicsMaterialKey = 11987;  break;
+                        physicsMaterialKey = 21165; staticPhysicsMaterialKey = 45941;  break;
                     case "PinkBubble":
-                        physicsMaterialKey = 21166; staticPhysicsMaterialKey = 11987;  break;
+                        physicsMaterialKey = 21166; staticPhysicsMaterialKey = 45941;  break;
                     case "Balloon":
-                        physicsMaterialKey = 12744; staticPhysicsMaterialKey = 11987;  break;
+                        physicsMaterialKey = 12744; staticPhysicsMaterialKey = 45941;  break;
                     case "Dissolve":
                         physicsMaterialKey = 22011; staticPhysicsMaterialKey = 2529223588l;  break;
                     case "Rubber":

@@ -584,18 +584,36 @@ public class ResourceConverter
             t.planGUID = guid;
         }
 
+        Group categoryGroup = context.loader.getPopitGroup(metadata.categoryKey);
+        Group themeGroup = context.loader.getPopitGroup(metadata.themeKey);
+
         details.dateAdded = 0;
         details.translationTag = tag;
         for (int i = 0; i < LanguageID.MAX; ++i)
         {
             details.titleKey = context.loader.addTranslationTag(i, tag + "_NAME",
                 metadata.nameTranslations[i]);
-            details.descriptionKey = context.loader.addTranslationTag(i, tag + "_DESC",
-                metadata.nameTranslations[i]);
+            if (themeGroup != null)
+            {
+                //if (metadata.descTranslations[i] == '\u0000')
+                //{
+                //    details.descriptionKey = context.loader.addTranslationTag(i, tag + "_DESC",
+                //        "From the " + themeGroup.translations[i].replace("The", "")
+                //        .replace('\u0000', ' ') + "theme.");
+                //}
+                //else
+                //{
+                    details.descriptionKey = context.loader.addTranslationTag(i, tag + "_DESC",
+                        metadata.descTranslations[i].replace("material.", "material from the " + themeGroup.translations[i]
+                        .replace("The", "").replace('\u0000', ' ') + "theme."));
+                //}
+            }
+            else
+            {
+                details.descriptionKey = context.loader.addTranslationTag(i, tag + "_DESC",
+                    metadata.descTranslations[i]);
+            }
         }
-
-        Group categoryGroup = context.loader.getPopitGroup(metadata.categoryKey);
-        Group themeGroup = context.loader.getPopitGroup(metadata.themeKey);
 
         if (categoryGroup != null)
         {

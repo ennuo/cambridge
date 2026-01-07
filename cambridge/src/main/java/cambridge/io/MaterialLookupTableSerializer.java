@@ -14,6 +14,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import cambridge.craftworld.MaterialLookupData;
+import cwlib.types.data.GUID;
 
 public class MaterialLookupTableSerializer implements JsonSerializer<HashMap<Integer, MaterialLookupData>>, JsonDeserializer<HashMap<Integer, MaterialLookupData>>
 {
@@ -56,6 +57,8 @@ public class MaterialLookupTableSerializer implements JsonSerializer<HashMap<Int
                 physics = -1,
                 staticPhysics = -1,
                 bevel = -1;
+            GUID
+                planGuid = null;
             int
                 sound = 0;
             
@@ -67,10 +70,12 @@ public class MaterialLookupTableSerializer implements JsonSerializer<HashMap<Int
                 staticPhysics = value.get("staticPhysics").getAsNumber().longValue();
             if (value.has("bevel"))
                 bevel = value.get("bevel").getAsNumber().longValue();
+            if (value.has("planGuid"))
+                planGuid = new GUID(value.get("planGuid").getAsNumber().longValue());
             if (value.has("sound"))
                 sound = value.get("sound").getAsNumber().intValue();
             
-            MLUT.put(uid, new MaterialLookupData(physics, staticPhysics, render, bevel, sound));
+            MLUT.put(uid, new MaterialLookupData(physics, staticPhysics, render, bevel, planGuid, sound));
         }
 
         return MLUT;
