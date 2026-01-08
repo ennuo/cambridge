@@ -1,6 +1,7 @@
 package cambridge.structures;
 
 import cambridge.io.streams.MemoryInputStream;
+import cambridge.structures.data.UID;
 
 public class SoundObject extends GameObject
 {
@@ -8,6 +9,7 @@ public class SoundObject extends GameObject
     public int param;
     public int playMode;
     public String sfx;
+    public UID parent;
 
     @Override
     public void load(MemoryInputStream stream)
@@ -19,5 +21,6 @@ public class SoundObject extends GameObject
         this.playMode = stream.i32();
         stream.f32(); //unknown
         this.sfx = stream.str(0x50);
+        this.parent = stream.uid();
     }
 }

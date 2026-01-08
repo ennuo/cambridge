@@ -5,12 +5,12 @@ import cambridge.structures.data.UID;
 
 public class CreaturePiece extends GameObject
 {
-    public UID referenceUid;
+    public UID parent;
     
     @Override
     public void load(MemoryInputStream stream)
     {
         super.load(stream);
-        this.referenceUid = stream.uid();
+        this.parent = stream.uid();
     }
 }

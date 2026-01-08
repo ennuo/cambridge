@@ -1,6 +1,7 @@
 package cambridge.structures;
 
 import cambridge.io.streams.MemoryInputStream;
+import cambridge.structures.data.UID;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -12,6 +13,7 @@ public class MagicMouth extends GameObject
     public boolean cutscene;
     public Vector2f pitchAngle;
     public Vector3f targetBox;
+    public UID parent;
 
     public String sfx;
 
@@ -38,5 +40,6 @@ public class MagicMouth extends GameObject
                 stream.at(stream.getOffset() + stream.i32()).cwstr()
             );
         }
+        this.parent = stream.uid();
     }
 }

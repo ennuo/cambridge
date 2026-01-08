@@ -11,6 +11,7 @@ public class Switch extends GameObject
     public UID[] targets;
     public float radius;
     public int colorIndex;
+    public UID parent;
 
     @Override
     public void load(MemoryInputStream stream)
@@ -31,7 +32,7 @@ public class Switch extends GameObject
         stream.i32(); // unk 
         this.radius = stream.f32(); // x50
         this.colorIndex = stream.i32();
-        stream.uid(); // uid of switch base?
+        this.parent = stream.uid(); // uid of switch parent
         stream.i32(); // unk
     }
 }

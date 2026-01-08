@@ -1,6 +1,7 @@
 package cambridge.structures;
 
 import cambridge.io.streams.MemoryInputStream;
+import cambridge.structures.data.UID;
 
 public class Music extends GameObject
 {
@@ -8,6 +9,7 @@ public class Music extends GameObject
     public float radius;
     public float volume;
     public String path;
+    public UID parent;
 
     @Override
     public void load(MemoryInputStream stream)
@@ -18,5 +20,6 @@ public class Music extends GameObject
         stream.i32();
         this.volume = stream.f32();
         this.path = stream.str(0x50);
+        this.parent = stream.uid();
     }
 }

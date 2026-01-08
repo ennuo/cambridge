@@ -11,6 +11,7 @@ public class PrizeBubble implements Serializable
     public Vector3f position;
     public String icon;
     public String prize;
+    public UID parent;
 
     @Override
     public void load(MemoryInputStream stream)
@@ -21,6 +22,7 @@ public class PrizeBubble implements Serializable
         stream.seek(0xC);
         this.icon = stream.at(stream.getOffset() + stream.i32()).cstr();
         this.prize = stream.at(stream.getOffset() + stream.i32()).cstr();
+        this.parent = stream.uid();
     }
 
 }

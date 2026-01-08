@@ -9,6 +9,7 @@ public class ScoreBubble implements Serializable
 {
     public UID uid;
     public Vector3f position;
+    public UID parent;
 
     @Override
     public void load(MemoryInputStream stream)
@@ -16,6 +17,7 @@ public class ScoreBubble implements Serializable
         this.uid = stream.uid();
         stream.seek(0x8);
         this.position = stream.v3();
+        this.parent = stream.uid();
     }
 
 }

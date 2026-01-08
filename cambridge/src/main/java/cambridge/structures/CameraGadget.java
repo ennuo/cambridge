@@ -1,6 +1,8 @@
 package cambridge.structures;
 
 import cambridge.io.streams.MemoryInputStream;
+import cambridge.structures.data.UID;
+
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -12,6 +14,7 @@ public class CameraGadget extends GameObject
     public Vector3f triggerPosition;
     public Vector3f triggerBox;
     public float zoomDistance;
+    public UID parent;
 
     @Override
     public void load(MemoryInputStream stream)
@@ -25,5 +28,6 @@ public class CameraGadget extends GameObject
         this.triggerBox = stream.v3();
 
         this.zoomDistance = stream.f32();
+        this.parent = stream.uid();
     }
 }

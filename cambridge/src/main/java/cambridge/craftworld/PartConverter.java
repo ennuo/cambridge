@@ -973,10 +973,10 @@ public class PartConverter
         creature.playerAwareness = brain.behavior;
         creature.awarenessRadius = brain.radius * WORLD_SCALE;
         creature.reactToLethal = brain.vulnerable != 0;
-        creature.speedModifier = brain.movement_speed;
+        creature.speedModifier = brain.movement_speed * 0.333333333f;
         creature.jumpInterval = (int) (brain.jump_interval * 30.0f);
         creature.jumpIntervalPhase = (int) (brain.jump_phase * 30.0f);
-        creature.jumpModifier = brain.jump_modifier;
+        creature.jumpModifier = brain.jump_modifier * 0.1f;
 
         context.lookup.put(brain.uid, brainThing);
         context.things.add(brainThing);
@@ -1012,7 +1012,7 @@ public class PartConverter
 
         wpos.setTranslation(translation);
         // Offset to account for model
-        wpos.translate(new Vector3f (0.0f, 20.0f, 0.0f).rotateZ(piece.angle));
+        if(type == 1) { wpos.translate(new Vector3f (0.0f, 24.0f, 0.0f).rotateZ(piece.angle)); }
         wpos.rotateZ(piece.angle);
         //wpos.rotateX(-1.5708f);
 
